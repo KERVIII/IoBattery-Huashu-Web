@@ -1,0 +1,1989 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ioBattery Pro × Makima — V5.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=JetBrains+Mono:wght@400;500;600;700;800&family=Orbitron:wght@700;800;900&family=Rajdhani:wght@600;700&family=Saira+Condensed:wght@700;800&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+
+/* ════════════════════════════════════════════════════════════════════════
+   ioBattery Pro × Makima Edition — V5.0 "Huashu" WebUI
+   Visual system: pure-black canvas · terracotta accent · beige paper cards
+   numbered section index · horizontal bar telemetry · grotesque display type
+   No purple gradients. No emoji-as-icon. No rounded+left-border cliché.
+   ════════════════════════════════════════════════════════════════════════ */
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { background: var(--canvas); overscroll-behavior: none; }
+
+:root {
+  /* canvas */
+  --canvas: #070706;
+  --surface: #111110;
+  --surface-2: #181714;
+  --surface-3: #1f1e1a;
+  --hair: rgba(255,255,255,.09);
+  --hair-2: rgba(255,255,255,.14);
+
+  /* paper (elevated light surfaces) */
+  --paper: #efe9dc;
+  --paper-2: #e3dac4;
+  --paper-ink: #18140e;
+  --paper-hair: rgba(20,16,10,.14);
+
+  /* accent — Huashu terracotta, doubles as Makima red */
+  --accent: #d97757;
+  --accent-2: #c2603f;
+  --accent-deep: #9c4a30;
+  --accent-soft: rgba(217,119,87,.15);
+  --accent-soft-2: rgba(217,119,87,.32);
+
+  /* text on black */
+  --text: #f3efe4;
+  --text-dim: rgba(243,239,228,.5);
+  --text-faint: rgba(243,239,228,.26);
+
+  /* status */
+  --green: #7fb56c;
+  --green-soft: rgba(127,181,108,.16);
+  --red: #d3554a;
+  --red-soft: rgba(211,85,74,.16);
+  --amber: #d6a13c;
+  --amber-soft: rgba(214,161,60,.16);
+
+  --display: 'Bricolage Grotesque', 'Avenir Next', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --body-f: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --mono: 'JetBrains Mono', 'SF Mono', 'Roboto Mono', ui-monospace, Menlo, monospace;
+
+  --nav-h: 76px;
+  --r-sm: 3px;
+  --r-md: 6px;
+  --r-lg: 12px;
+}
+
+body {
+  font-family: var(--body-f);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  background-image:
+    linear-gradient(rgba(255,255,255,.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.022) 1px, transparent 1px);
+  background-size: 26px 26px;
+  background-attachment: fixed;
+}
+
+#app { min-height: 100vh; display: flex; flex-direction: column; position: relative; }
+
+/* ── status bar (real device clock / battery readout) ───────────────── */
+.status-bar {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 18px 6px; font-family: var(--mono); font-size: 11px;
+  color: var(--text-faint); letter-spacing: .04em;
+}
+.status-bar #status-bat { color: var(--text-dim); }
+
+/* ── tab plumbing ─────────────────────────────────────────────────────── */
+.tab-content { display: none; flex: 1; overflow-y: auto; overflow-x: hidden; padding: 4px 18px calc(var(--nav-h) + 22px); }
+.tab-content.active { display: block; }
+.tab-content::-webkit-scrollbar { display: none; }
+
+/* ── page header ──────────────────────────────────────────────────────── */
+.page-head { padding: 10px 0 18px; position: relative; }
+.page-eyebrow { font-family: var(--mono); font-size: 10.5px; letter-spacing: .16em; color: var(--accent); text-transform: uppercase; font-weight: 700; }
+.page-title { font-family: var(--display); font-size: 30px; font-weight: 800; letter-spacing: -0.01em; line-height: 1.05; margin-top: 4px; }
+.page-sub { font-size: 12.5px; color: var(--text-dim); margin-top: 5px; max-width: 86%; }
+.page-head-actions { position: absolute; top: 8px; right: 0; display: flex; gap: 8px; }
+.icon-btn {
+  width: 36px; height: 36px; border: 1px solid var(--hair); border-radius: var(--r-md);
+  display: flex; align-items: center; justify-content: center; color: var(--text-dim);
+  background: var(--surface); cursor: pointer;
+}
+.icon-btn svg { width: 17px; height: 17px; }
+.icon-btn:active { background: var(--surface-2); }
+
+/* ── numbered section header (Huashu "01 / 02 / 03" pattern) ────────────── */
+.sec {
+  display: flex; align-items: baseline; gap: 10px; margin: 26px 0 12px;
+}
+.sec:first-of-type { margin-top: 4px; }
+.sec .n { font-family: var(--mono); font-weight: 800; font-size: 13px; color: var(--accent); flex-shrink: 0; }
+.sec .t { font-family: var(--display); font-weight: 800; font-size: 13px; letter-spacing: .1em; text-transform: uppercase; }
+.sec .rule { flex: 1; height: 1px; background: var(--hair); margin-left: 4px; }
+.sec-action { font-family: var(--mono); font-size: 10.5px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .06em; cursor: pointer; }
+
+/* ── hero identity card ───────────────────────────────────────────────── */
+.hero {
+  border: 1px solid var(--hair); border-radius: var(--r-md); padding: 18px 18px 16px;
+  background: var(--surface); position: relative; overflow: hidden;
+}
+.hero-tag {
+  position: absolute; top: 14px; right: 14px; font-family: var(--mono); font-size: 10px;
+  font-weight: 800; letter-spacing: .12em; color: var(--canvas); background: var(--accent);
+  padding: 3px 8px; border-radius: 2px;
+}
+.hero-word { font-family: var(--display); font-size: 27px; font-weight: 800; letter-spacing: -.01em; }
+.hero-word span { color: var(--accent); }
+.hero-meta { margin-top: 9px; font-family: var(--mono); font-size: 11.5px; color: var(--text-dim); line-height: 1.7; }
+.hero-meta b { color: var(--text); font-weight: 600; }
+.hero-root-row { display: flex; align-items: center; gap: 7px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--hair); font-size: 11.5px; color: var(--text-dim); }
+.root-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-faint); flex-shrink: 0; }
+.root-dot.on { background: var(--green); box-shadow: 0 0 0 3px var(--green-soft); }
+.root-dot.off { background: var(--red); box-shadow: 0 0 0 3px var(--red-soft); }
+#root-status-text { color: var(--text); font-weight: 600; }
+
+/* ── stat cards row ───────────────────────────────────────────────────── */
+.stat-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+.stat-card {
+  background: var(--paper); color: var(--paper-ink); border-radius: var(--r-md);
+  padding: 13px 14px; cursor: pointer; position: relative;
+}
+.stat-card .lbl { font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; opacity: .55; }
+.stat-card .val { font-family: var(--display); font-weight: 800; font-size: 21px; margin-top: 5px; letter-spacing: -.01em; }
+.stat-card .hint { font-size: 10.5px; margin-top: 3px; font-weight: 600; opacity: .62; }
+
+/* ── horizontal telemetry bars (Huashu "before/after" bar pattern) ──────── */
+.bar-card { border: 1px solid var(--hair); border-radius: var(--r-md); background: var(--surface); padding: 14px 16px 10px; margin-top: 10px; }
+.bar-row { margin-bottom: 14px; }
+.bar-row:last-child { margin-bottom: 4px; }
+.bar-row-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; margin-bottom: 6px; }
+.bar-row-head .k { color: var(--text-dim); font-weight: 600; }
+.bar-row-head .v { font-family: var(--mono); font-weight: 700; color: var(--text); font-size: 12.5px; }
+.bar-track { height: 9px; background: var(--surface-3); border-radius: 1px; overflow: hidden; position: relative; }
+.bar-fill { height: 100%; background: var(--accent); width: 0%; transition: width .5s cubic-bezier(.22,1,.36,1); border-radius: 1px; }
+.bar-fill.green { background: var(--green); }
+.bar-fill.red { background: var(--red); }
+.bar-fill.amber { background: var(--amber); }
+
+/* ── paper card grid (profile cards / app-architecture style cards) ─────── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.pcard {
+  background: var(--paper); color: var(--paper-ink); border-radius: var(--r-md); overflow: hidden;
+  border: 2px solid transparent; cursor: pointer;
+}
+.pcard.active { border-color: var(--paper-ink); }
+.pcard-head {
+  background: var(--accent-2); color: #fff; font-family: var(--mono); font-weight: 800; font-size: 11px;
+  padding: 6px 10px; display: flex; justify-content: space-between; align-items: center; letter-spacing: .04em;
+}
+.pcard-head .ck { display: none; }
+.pcard.active .pcard-head .ck { display: inline; }
+.pcard-body { padding: 11px 12px 13px; }
+.pcard-name { font-family: var(--display); font-weight: 800; font-size: 15.5px; }
+.pcard-desc { font-size: 11px; opacity: .6; margin-top: 2px; }
+
+/* ── quick action chips ───────────────────────────────────────────────── */
+.qa-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+.qa-btn {
+  border: 1px solid var(--hair); border-radius: var(--r-md); background: var(--surface);
+  padding: 12px 6px 10px; text-align: center; font-size: 11px; font-weight: 700; color: var(--text-dim);
+  line-height: 1.3; cursor: pointer;
+}
+.qa-btn .qa-n { display: block; font-family: var(--mono); font-size: 10px; color: var(--accent); font-weight: 800; margin-bottom: 4px; }
+.qa-btn:active { background: var(--surface-2); }
+
+.danger-btn {
+  width: 100%; margin-top: 14px; padding: 13px; border-radius: var(--r-md);
+  background: var(--red-soft); border: 1px solid rgba(211,85,74,.4); color: var(--red);
+  font-family: var(--mono); font-weight: 800; font-size: 12px; letter-spacing: .08em;
+  text-transform: uppercase; cursor: pointer; text-align: center;
+}
+
+/* ── toggle list (settings rows) ─────────────────────────────────────── */
+.toggle-card { border: 1px solid var(--hair); border-radius: var(--r-md); background: var(--surface); overflow: hidden; margin-bottom: 4px; }
+.toggle-row { display: flex; align-items: center; gap: 12px; padding: 13px 14px; border-bottom: 1px solid var(--hair); }
+.toggle-row:last-child { border-bottom: none; }
+.toggle-text { flex: 1; min-width: 0; }
+.toggle-label { font-size: 13px; font-weight: 600; }
+.toggle-desc { font-size: 11px; color: var(--text-dim); margin-top: 2px; line-height: 1.4; }
+.switch { position: relative; width: 42px; height: 24px; flex-shrink: 0; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.switch .track { position: absolute; inset: 0; background: var(--surface-3); border: 1px solid var(--hair-2); border-radius: 14px; transition: background .18s, border-color .18s; }
+.switch .knob { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: var(--text-faint); transition: transform .18s, background .18s; }
+.switch input:checked + .track { background: var(--accent-soft-2); border-color: var(--accent); }
+.switch input:checked + .track .knob { transform: translateX(18px); background: var(--accent); }
+
+.toggle-row.wifi-sub.off { opacity: .4; pointer-events: none; }
+
+/* ── theme palette swatches (old-money color picker) ─────────────────── */
+#theme-grid { display: flex; flex-direction: column; gap: 9px; }
+.theme-row {
+  display: flex; height: 58px; border-radius: var(--r-md); overflow: hidden;
+  position: relative; cursor: pointer; border: 2px solid var(--hair);
+}
+.theme-row.active { border-color: var(--text); }
+.theme-row .half {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  font-family: var(--display); font-weight: 800; font-size: 14px; letter-spacing: -.01em;
+}
+.theme-row .theme-check {
+  position: absolute; top: 6px; right: 8px; width: 18px; height: 18px; border-radius: 50%;
+  background: var(--text); color: var(--canvas); font-size: 11px; font-weight: 800;
+  display: none; align-items: center; justify-content: center;
+}
+.theme-row.active .theme-check { display: flex; }
+
+/* ── profile header: banner + overlapping avatar ──────────────────────── */
+.profile-header { margin-bottom: 6px; }
+.pf-banner-wrap { position: relative; width: 100%; aspect-ratio: 3 / 1; border-radius: var(--r-lg); overflow: hidden; background: var(--surface); border: 1px solid var(--hair); }
+.pf-banner-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.pf-banner-fade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0) 45%, rgba(0,0,0,.5) 100%); pointer-events: none; }
+.pf-edit-btn {
+  position: absolute; width: 30px; height: 30px; border-radius: 50%;
+  background: rgba(10,10,9,.74); border: 1px solid rgba(255,255,255,.2);
+  display: flex; align-items: center; justify-content: center; color: #fff;
+  backdrop-filter: blur(6px); cursor: pointer;
+}
+.pf-edit-btn svg { width: 14px; height: 14px; }
+.pf-banner-edit { top: 8px; right: 8px; }
+.pf-avatar-row { margin-top: -32px; padding-left: 14px; position: relative; }
+.pf-avatar-wrap { position: relative; width: 66px; }
+.pf-avatar-img { width: 66px; height: 66px; border-radius: 50%; object-fit: cover; border: 3px solid var(--canvas); background: var(--surface); display: block; }
+.pf-avatar-edit { width: 23px; height: 23px; bottom: -3px; right: -3px; }
+.pf-name-block { padding: 9px 6px 0; }
+.pf-name { font-family: var(--display); font-weight: 800; font-size: 17px; color: var(--text); }
+.pf-sub { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+.pf-live { display: flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 10.5px; color: var(--green); font-weight: 700; }
+
+/* ── image crop modal (shared by banner + avatar) ─────────────────────── */
+.overlay-bar .save-btn { margin-left: auto; background: var(--accent); color: #fff; border: none; border-radius: var(--r-sm); padding: 8px 16px; font-family: var(--body-f); font-weight: 700; font-size: 12.5px; cursor: pointer; }
+.overlay-bar .save-btn:disabled { opacity: .35; }
+.crop-stage { flex: 1; display: flex; align-items: center; justify-content: center; padding: 24px 20px; overflow: hidden; touch-action: none; }
+.crop-frame { position: relative; overflow: hidden; background: #050504; touch-action: none; border: 1px solid var(--hair); display: flex; align-items: center; justify-content: center; }
+.crop-frame.banner { width: 100%; aspect-ratio: 3 / 1; border-radius: var(--r-md); }
+.crop-frame.avatar { width: 240px; height: 240px; border-radius: 50%; }
+.crop-frame img { position: absolute; left: 0; top: 0; transform-origin: 0 0; will-change: transform; user-select: none; -webkit-user-drag: none; max-width: none; }
+.crop-empty { text-align: center; padding: 0 20px; }
+.crop-controls { padding: 16px 20px 28px; flex-shrink: 0; }
+.crop-hint { font-size: 11px; color: var(--text-faint); margin-top: 10px; font-family: var(--mono); }
+.crop-zoom-wrap { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.crop-zoom-lbl { font-size: 11px; color: var(--text-dim); font-family: var(--mono); flex-shrink: 0; }
+.crop-actions { display: flex; gap: 10px; }
+.cm-btn-ghost { flex: 1; background: var(--surface); border: 1px solid var(--hair); color: var(--text); border-radius: var(--r-md); padding: 12px; font-family: var(--body-f); font-weight: 700; font-size: 12.5px; cursor: pointer; }
+.cm-btn-ghost.danger { color: var(--red); }
+.cm-btn-solid { background: var(--accent); color: #fff; border: none; border-radius: var(--r-md); padding: 13px 22px; font-family: var(--body-f); font-weight: 700; font-size: 13px; cursor: pointer; }
+
+/* ── font style picker ─────────────────────────────────────────────────── */
+#font-grid { display: flex; flex-direction: column; gap: 9px; }
+.font-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 13px 16px; border-radius: var(--r-md); border: 2px solid var(--hair);
+  background: var(--surface); cursor: pointer; position: relative;
+}
+.font-row.active { border-color: var(--accent); }
+.font-row .font-preview { font-size: 19px; font-weight: 700; color: var(--text); line-height: 1; }
+.font-row .font-label { font-size: 10.5px; color: var(--text-faint); font-family: var(--mono); text-align: right; flex-shrink: 0; }
+.font-row .theme-check { position: static; display: none; width: 18px; height: 18px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 11px; align-items: center; justify-content: center; margin-left: 4px; }
+.font-row.active .theme-check { display: flex; }
+
+.nav-row { display: flex; align-items: center; gap: 12px; padding: 14px; border: 1px solid var(--hair); border-radius: var(--r-md); background: var(--surface); margin-bottom: 8px; cursor: pointer; }
+.nav-row .ico { width: 30px; height: 30px; border-radius: var(--r-sm); background: var(--accent-soft); color: var(--accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.nav-row .ico svg { width: 16px; height: 16px; }
+.nav-row .txt { flex: 1; min-width: 0; }
+.nav-row .lbl { font-size: 13px; font-weight: 700; }
+.nav-row .desc { font-size: 11px; color: var(--text-dim); margin-top: 1px; }
+.nav-row .chev { color: var(--text-faint); flex-shrink: 0; }
+.nav-row .chev svg { width: 16px; height: 16px; }
+
+/* ── console / log readout ───────────────────────────────────────────── */
+.console { border: 1px solid var(--hair); border-radius: var(--r-md); background: #050504; padding: 12px 14px; font-family: var(--mono); font-size: 10.5px; line-height: 1.65; color: #8fd98a; max-height: 150px; overflow-y: auto; }
+.console .ln { white-space: pre-wrap; word-break: break-all; }
+.console .ln.warn { color: var(--amber); }
+.console .ln.err { color: var(--red); }
+.console .ln .t { color: var(--text-faint); }
+
+/* ── slider (glass lab / personality) ────────────────────────────────── */
+.slider-card { border: 1px solid var(--hair); border-radius: var(--r-md); background: var(--surface); padding: 14px 16px; margin-bottom: 10px; }
+.slider-card .head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.slider-card .name { font-size: 12.5px; font-weight: 700; }
+.slider-card .readout { font-family: var(--mono); font-size: 11.5px; font-weight: 800; color: var(--accent); background: var(--accent-soft); padding: 2px 9px; border-radius: 20px; }
+input[type=range] { width: 100%; accent-color: var(--accent); height: 4px; }
+
+/* ── bottom nav ───────────────────────────────────────────────────────── */
+#bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0; height: var(--nav-h);
+  display: flex; background: rgba(7,7,6,.92); backdrop-filter: blur(18px);
+  border-top: 1px solid var(--hair); padding-bottom: env(safe-area-inset-bottom, 0);
+  z-index: 50;
+}
+.nav-tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: var(--text-faint); cursor: pointer; }
+.nav-tab svg { width: 21px; height: 21px; }
+.nav-tab span { font-size: 10px; font-weight: 700; letter-spacing: .02em; }
+.nav-tab.active { color: var(--accent); }
+
+/* ── full-screen overlay (perf monitor / logs) ───────────────────────── */
+.overlay { position: fixed; inset: 0; background: var(--canvas); z-index: 100; transform: translateY(100%); transition: transform .28s cubic-bezier(.22,1,.36,1); display: flex; flex-direction: column; }
+.overlay.show { transform: translateY(0); }
+.overlay-bar { display: flex; align-items: center; gap: 12px; padding: 16px 16px 12px; border-bottom: 1px solid var(--hair); flex-shrink: 0; }
+.overlay-bar h2 { font-family: var(--display); font-weight: 800; font-size: 16px; }
+.overlay-body { flex: 1; overflow-y: auto; padding: 16px 16px 40px; }
+.back-btn { width: 34px; height: 34px; border: 1px solid var(--hair); border-radius: var(--r-md); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.back-btn svg { width: 17px; height: 17px; }
+.live-chip { margin-left: auto; display: flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 10px; font-weight: 800; letter-spacing: .08em; color: var(--green); }
+.live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 1.6s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+/* ── confirm dialog ───────────────────────────────────────────────────── */
+#confirm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 200; display: none; align-items: center; justify-content: center; padding: 24px; }
+#confirm-overlay.show { display: flex; }
+.confirm-sheet { background: var(--paper); color: var(--paper-ink); border-radius: var(--r-md); padding: 20px; width: 100%; max-width: 320px; }
+.confirm-sheet h3 { font-family: var(--display); font-size: 16px; font-weight: 800; margin-bottom: 8px; }
+.confirm-sheet p { font-size: 12.5px; opacity: .7; line-height: 1.5; margin-bottom: 16px; }
+.confirm-actions { display: flex; gap: 8px; }
+.confirm-actions button { flex: 1; padding: 11px; border-radius: var(--r-sm); font-weight: 700; font-size: 12.5px; border: none; cursor: pointer; }
+.btn-ghost { background: transparent; border: 1px solid var(--paper-hair) !important; color: var(--paper-ink); }
+.btn-solid { background: var(--accent-2); color: #fff; }
+
+/* ── toast ────────────────────────────────────────────────────────────── */
+#toast { position: fixed; bottom: calc(var(--nav-h) + 14px); left: 50%; transform: translateX(-50%) translateY(20px); background: var(--paper); color: var(--paper-ink); font-size: 12.5px; font-weight: 700; padding: 10px 18px; border-radius: 20px; opacity: 0; transition: opacity .2s, transform .2s; z-index: 300; pointer-events: none; }
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── apps subpage ─────────────────────────────────────────────────────── */
+.search-box { display: flex; align-items: center; gap: 8px; border: 1px solid var(--hair); border-radius: var(--r-md); padding: 10px 12px; background: var(--surface); margin-bottom: 12px; }
+.search-box svg { width: 15px; height: 15px; color: var(--text-faint); flex-shrink: 0; }
+.search-box input { flex: 1; background: none; border: none; outline: none; color: var(--text); font-size: 13px; }
+.seg { display: flex; border: 1px solid var(--hair); border-radius: var(--r-md); overflow: hidden; margin-bottom: 12px; }
+.seg button { flex: 1; padding: 9px; background: var(--surface); color: var(--text-dim); border: none; font-size: 11.5px; font-weight: 700; cursor: pointer; }
+.seg button.active { background: var(--accent); color: var(--canvas); }
+.app-row { display: flex; align-items: center; gap: 10px; padding: 11px 0; border-bottom: 1px solid var(--hair); }
+.app-row .nm { flex: 1; min-width: 0; font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.app-modes { display: flex; gap: 5px; }
+.app-modes button { font-family: var(--mono); font-size: 9.5px; font-weight: 800; padding: 5px 7px; border-radius: var(--r-sm); border: 1px solid var(--hair-2); background: var(--surface-2); color: var(--text-dim); cursor: pointer; }
+.app-modes button.active { background: var(--accent); color: var(--canvas); border-color: var(--accent); }
+
+.empty-state { text-align: center; padding: 40px 20px; color: var(--text-faint); font-size: 12.5px; }
+
+.footnote { text-align: center; font-family: var(--mono); font-size: 10.5px; color: var(--text-faint); line-height: 1.8; padding: 20px 0 6px; }
+.tg-btn { display: flex; align-items: center; justify-content: center; gap: 9px; padding: 13px; border: 1px solid var(--hair); border-radius: var(--r-md); margin: 14px 0 6px; cursor: pointer; }
+.tg-btn span { font-size: 12.5px; font-weight: 700; }
+
+.compat-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.compat-chip { border: 1px solid var(--hair); border-radius: var(--r-md); padding: 9px 11px; font-size: 11.5px; font-weight: 700; color: var(--text-dim); display: flex; justify-content: space-between; align-items: center; }
+.compat-chip .d { width: 7px; height: 7px; border-radius: 50%; background: var(--text-faint); }
+.compat-chip.on .d { background: var(--green); }
+.compat-chip.on { color: var(--text); }
+
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <div class="status-bar">
+    <span id="clock">0:00</span>
+    <span id="status-bat">— %</span>
+  </div>
+
+  <!-- ════════════════ HOME ════════════════ -->
+  <div class="tab-content active" id="tab-home">
+
+    <div class="page-head">
+      <div class="page-eyebrow">Kyorizz — Battery Intelligence</div>
+      <div class="page-title">ioBattery</div>
+      <div class="page-head-actions">
+        <div class="icon-btn" onclick="openOverlay('perf-overlay')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero">
+      <div class="hero-tag" id="hero-version">V5.0</div>
+      <div class="hero-word">io<span>Battery</span> Pro</div>
+      <div class="hero-meta">
+        <div><b id="hero-device">—</b> · Android <span id="hero-android">—</span></div>
+        <div id="hero-chipset">Detecting chipset…</div>
+        <div id="hero-kernel">Kernel —</div>
+      </div>
+      <div class="hero-root-row">
+        <div class="root-dot" id="root-dot"></div>
+        <span>Root: <span id="root-status-text">Checking…</span></span>
+      </div>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-card" onclick="openOverlay('perf-overlay')">
+        <div class="lbl">Battery</div>
+        <div class="val" id="bat-stat-val">—%</div>
+        <div class="hint" id="bat-health-short">Health —</div>
+      </div>
+      <div class="stat-card" onclick="switchTab('features')">
+        <div class="lbl">Profile</div>
+        <div class="val" id="profile-stat-val">—</div>
+        <div class="hint">Tap to change</div>
+      </div>
+    </div>
+
+    <div class="sec"><span class="n">01</span><span class="t">System Telemetry</span><span class="rule"></span><span class="sec-action" onclick="openOverlay('perf-overlay')">Full</span></div>
+    <div class="bar-card">
+      <div class="bar-row">
+        <div class="bar-row-head"><span class="k">CPU usage</span><span class="v" id="cpu-val">—%</span></div>
+        <div class="bar-track"><div class="bar-fill" id="cpu-bar"></div></div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-row-head"><span class="k">Battery temperature</span><span class="v" id="temp-val">—°C</span></div>
+        <div class="bar-track"><div class="bar-fill" id="temp-bar"></div></div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-row-head"><span class="k">Voltage</span><span class="v" id="volt-val">— mV</span></div>
+        <div class="bar-track"><div class="bar-fill" id="volt-bar"></div></div>
+      </div>
+    </div>
+
+    <div class="sec"><span class="n">02</span><span class="t">Module Compatibility</span><span class="rule"></span></div>
+    <div class="compat-row" id="compat-row">
+      <div class="compat-chip"><span>AZenith</span><div class="d"></div></div>
+      <div class="compat-chip"><span>Encore</span><div class="d"></div></div>
+      <div class="compat-chip"><span>Project Raco</span><div class="d"></div></div>
+      <div class="compat-chip"><span>RaiRin AI</span><div class="d"></div></div>
+    </div>
+
+  </div>
+
+  <!-- ════════════════ FEATURES ════════════════ -->
+  <div class="tab-content" id="tab-features">
+
+    <div class="page-head">
+      <div class="page-eyebrow">Profiles &amp; Tuning</div>
+      <div class="page-title">Features</div>
+      <div class="page-head-actions">
+        <div class="icon-btn" onclick="openOverlay('logs-overlay')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="console" id="feat-console"><div class="ln"><span class="t">[boot]</span> awaiting telemetry…</div></div>
+
+    <div class="sec"><span class="n">01</span><span class="t">Power Profiles</span><span class="rule"></span></div>
+    <div class="grid-2">
+      <div class="pcard" id="pf-eco" onclick="setProf('eco')">
+        <div class="pcard-head"><span>01 / Eco</span><span class="ck">✓</span></div>
+        <div class="pcard-body"><div class="pcard-name">Eco</div><div class="pcard-desc">Max battery life</div></div>
+      </div>
+      <div class="pcard" id="pf-balanced" onclick="setProf('balanced')">
+        <div class="pcard-head"><span>02 / Balanced</span><span class="ck">✓</span></div>
+        <div class="pcard-body"><div class="pcard-name">Balanced</div><div class="pcard-desc">Daily driver</div></div>
+      </div>
+      <div class="pcard" id="pf-beast" onclick="setProf('beast')">
+        <div class="pcard-head"><span>03 / Beast</span><span class="ck">✓</span></div>
+        <div class="pcard-body"><div class="pcard-name">Beast</div><div class="pcard-desc">Full performance</div></div>
+      </div>
+      <div class="pcard" id="pf-gaming" onclick="setProf('gaming')">
+        <div class="pcard-head"><span>04 / Gaming</span><span class="ck">✓</span></div>
+        <div class="pcard-body"><div class="pcard-name">Gaming</div><div class="pcard-desc">FPS + touch latency</div></div>
+      </div>
+    </div>
+
+    <div class="sec"><span class="n">02</span><span class="t">Quick Actions</span><span class="rule"></span></div>
+    <div class="qa-row">
+      <div class="qa-btn" onclick="qa('killbg')"><span class="qa-n">01</span>Kill BG Apps</div>
+      <div class="qa-btn" onclick="qa('doze')"><span class="qa-n">02</span>Force Doze</div>
+      <div class="qa-btn" onclick="openOverlay('apps-overlay')"><span class="qa-n">03</span>App Optimize</div>
+    </div>
+    <button class="danger-btn" onclick="trigEmergency()">Emergency Cool Down</button>
+
+    <div class="sec"><span class="n">03</span><span class="t">Battery</span><span class="rule"></span></div>
+    <div class="toggle-card">
+      <div class="toggle-row">
+        <div class="toggle-text"><div class="toggle-label">Charge limit</div><div class="toggle-desc">Stop charging at <span id="chg-limit-val">80</span>%</div></div>
+        <label class="switch"><input type="checkbox" id="sw-charge_limit_enable" onchange="ts(this,'charge_limit_enable')"><span class="track"><span class="knob"></span></span></label>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-text"><div class="toggle-label">Limit threshold</div><div class="toggle-desc">Drag to set charge cap</div></div>
+      </div>
+      <div style="padding:0 14px 14px"><input type="range" min="50" max="100" value="80" id="sl-charge_limit" oninput="sv('sl-charge_limit','chg-limit-val','charge_limit')"></div>
+      <div class="toggle-row">
+        <div class="toggle-text"><div class="toggle-label">Temp-based charge control</div><div class="toggle-desc">Pause charging above <span id="temp-max-val">43</span>°C</div></div>
+        <label class="switch"><input type="checkbox" id="sw-temp_charge_control" onchange="ts(this,'temp_charge_control')"><span class="track"><span class="knob"></span></span></label>
+      </div>
+      <div style="padding:0 14px 14px"><input type="range" min="35" max="50" value="43" id="sl-temp_max" oninput="sv('sl-temp_max','temp-max-val','temp_max')"></div>
+      <div class="toggle-row">
+        <div class="toggle-text"><div class="toggle-label">Fast charge</div><div class="toggle-desc">Allow vendor fast-charge negotiation</div></div>
+        <label class="switch"><input type="checkbox" id="sw-fast_charge" onchange="ts(this,'fast_charge')"><span class="track"><span class="knob"></span></span></label>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-text"><div class="toggle-label">Charging bypass</div><div class="toggle-desc">Bypass charging for sustained load</div></div>
+        <label class="switch"><input type="checkbox" id="sw-charging_bypass" onchange="ts(this,'charging_bypass')"><span class="track"><span class="knob"></span></span></label>
+      </div>
+    </div>
+
+    <div class="sec"><span class="n">04</span><span class="t">Performance &amp; Kernel</span><span class="rule"></span></div>
+    <div class="toggle-card">
+      <div class="toggle-row">
+        <div class="toggle-text"><div class="toggle-label">Auto low power</div><div class="toggle-desc">Below <span id="low-thr-val">20</span>% battery</div></div>
+        <label class="switch"><input type="checkbox" id="sw-auto_low_power" onchange="ts(this,'auto_low_power')"><span class="track"><span class="knob"></span></span></label>
+      </div>
+      <div style="padding:0 14px 14px"><input type="range" min="5" max="40" value="20" id="sl-low_threshold" oninput="sv('sl-low_threshold','low-thr-val','low_threshold')"></div>
+      <div class="toggle-row">
+        <div class="toggle-text"><div class="toggle-label">Smart FPS</div><div class="toggle-desc">Cap to 60Hz in Eco mode</div></div>
+        <label class="switch"><input type="checkbox" id="sw-smart_fps" onchange="ts(this,'smart_fps')"><span class="track"><span class="knob"></span></span></label>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-text"><div class="toggle-label">LMK tuning</div><div class="toggle-desc">Low-memory-killer thresholds</div></div>
+        <label class="switch"><input type="checkbox" id="sw-lmk_tune" onchange="ts(this,'lmk_tune')"><span class="track"><span class="knob"></span></span></label>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-text"><div class="toggle-label">Memory tuning</div><div class="toggle-desc">ZRAM lz4 + swappiness per profile</div></div>
+        <label class="switch"><input type="checkbox" id="sw-memory_tuning" onchange="ts(this,'memory_tuning')"><span class="track"><span class="knob"></span></span></label>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-text"><div class="toggle-label">TCP tuning</div><div class="toggle-desc">BBR congestion control + keepalive</div></div>
+        <label class="switch"><input type="checkbox" id="sw-tcp_tuning" onchange="ts(this,'tcp_tuning')"><span class="track"><span class="knob"></span></span></label>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-text"><div class="toggle-label">Wakelock reduction</div><div class="toggle-desc">Trim partial wakelocks in background</div></div>
+        <label class="switch"><input type="checkbox" id="sw-wakelock_reduce" onchange="ts(this,'wakelock_reduce')"><span class="track"><span class="knob"></span></span></label>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-text"><div class="toggle-label">Scan reduction</div><div class="toggle-desc">Throttle WiFi / BLE background scans</div></div>
+        <label class="switch"><input type="checkbox" id="sw-scan_reduce" onchange="ts(this,'scan_reduce')"><span class="track"><span class="knob"></span></span></label>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-text"><div class="toggle-label">Background app freeze</div><div class="toggle-desc">Freeze idle apps via cgroup</div></div>
+        <label class="switch"><input type="checkbox" id="sw-bg_freeze" onchange="ts(this,'bg_freeze')"><span class="track"><span class="knob"></span></span></label>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-text"><div class="toggle-label">Aggressive Doze</div><div class="toggle-desc">Force-enter idle sooner on screen-off</div></div>
+        <label class="switch"><input type="checkbox" id="sw-aggressive_doze" onchange="ts(this,'aggressive_doze')"><span class="track"><span class="knob"></span></span></label>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-text"><div class="toggle-label">MTK logger kill</div><div class="toggle-desc">Stop MediaTek logging daemons</div></div>
+        <label class="switch"><input type="checkbox" id="sw-mtk_logger" onchange="ts(this,'mtk_logger')"><span class="track"><span class="knob"></span></span></label>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-text"><div class="toggle-label">Touch latency mode</div><div class="toggle-desc">Reduced-latency input path (gaming)</div></div>
+        <label class="switch"><input type="checkbox" id="sw-touch_latency" onchange="ts(this,'touch_latency')"><span class="track"><span class="knob"></span></span></label>
+      </div>
+    </div>
+
+    <div class="sec"><span class="n">05</span><span class="t">WiFi Boost</span><span class="rule"></span></div>
+    <div class="toggle-card">
+      <div class="toggle-row">
+        <div class="toggle-text"><div class="toggle-label">WiFi Boost</div><div class="toggle-desc">Master switch — bonding engine below</div></div>
+        <label class="switch"><input type="checkbox" id="sw-wifi_boost" onchange="tsWifiBoost(this)"><span class="track"><span class="knob"></span></span></label>
+      </div>
+      <div class="toggle-row wifi-sub">
+        <div class="toggle-text"><div class="toggle-label">Bonding engine</div><div class="toggle-desc">Aggregate radio throughput</div></div>
+        <label class="switch"><input type="checkbox" id="sw-wifi_bonding_engine" onchange="tsWifiFeature(this,'wifi_bonding_engine')"><span class="track"><span class="knob"></span></span></label>
+      </div>
+      <div class="toggle-row wifi-sub">
+        <div class="toggle-text"><div class="toggle-label">Low scan mode</div><div class="toggle-desc">Reduce background AP scanning</div></div>
+        <label class="switch"><input type="checkbox" id="sw-wifi_scan_low_mode" onchange="tsWifiFeature(this,'wifi_scan_low_mode')"><span class="track"><span class="knob"></span></span></label>
+      </div>
+      <div class="toggle-row wifi-sub">
+        <div class="toggle-text"><div class="toggle-label">Latency reduce</div><div class="toggle-desc">Prioritize round-trip time</div></div>
+        <label class="switch"><input type="checkbox" id="sw-wifi_latency_reduce" onchange="tsWifiFeature(this,'wifi_latency_reduce')"><span class="track"><span class="knob"></span></span></label>
+      </div>
+      <div class="toggle-row wifi-sub">
+        <div class="toggle-text"><div class="toggle-label">Net stability</div><div class="toggle-desc">Smooth roaming / handoff</div></div>
+        <label class="switch"><input type="checkbox" id="sw-wifi_net_stability" onchange="tsWifiFeature(this,'wifi_net_stability')"><span class="track"><span class="knob"></span></span></label>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ════════════════ MAKIMA ════════════════ -->
+  <div class="tab-content" id="tab-makima">
+
+    <div class="page-head">
+      <div class="page-eyebrow">Companion System</div>
+      <div class="page-title">io Makima</div>
+    </div>
+
+    <div class="profile-header">
+      <div class="pf-banner-wrap">
+        <img src="default_banner.jpg" id="banner-img" class="pf-banner-img" alt="">
+        <div class="pf-banner-fade"></div>
+        <div class="pf-edit-btn pf-banner-edit" onclick="openCrop('banner')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>
+        </div>
+      </div>
+      <div class="pf-avatar-row">
+        <div class="pf-avatar-wrap">
+          <img src="default_avatar.jpg" id="avatar-img" class="pf-avatar-img" alt="">
+          <div class="pf-edit-btn pf-avatar-edit" onclick="openCrop('avatar')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>
+          </div>
+        </div>
+      </div>
+      <div class="pf-name-block">
+        <div class="pf-name">io Makima</div>
+        <div class="pf-sub">Battery Intelligence System</div>
+        <div class="pf-live"><div class="live-dot" style="background:var(--green)"></div>Online &amp; watching telemetry</div>
+      </div>
+    </div>
+
+    <div class="sec"><span class="n">01</span><span class="t">Status Message</span><span class="rule"></span></div>
+    <div class="bar-card" style="padding:16px">
+      <div id="makima-msg" style="font-size:13.5px;line-height:1.6;color:var(--text)">Reading battery telemetry…</div>
+    </div>
+
+    <div class="sec"><span class="n">02</span><span class="t">Behaviour</span><span class="rule"></span></div>
+    <div class="slider-card">
+      <div class="head"><span class="name">Personality level</span><span class="readout" id="personality-lbl">Balanced</span></div>
+      <input type="range" min="0" max="100" value="60" id="personality-sl" oninput="setPersonalityLevel(this.value)">
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-faint);margin-top:6px;font-family:var(--mono)">
+        <span>PROFESSIONAL</span><span>FLIRTY</span>
+      </div>
+    </div>
+    <div class="toggle-card">
+      <div class="toggle-row">
+        <div class="toggle-text"><div class="toggle-label">Makima notifications</div><div class="toggle-desc">Boot greeting + mode-change callouts</div></div>
+        <label class="switch"><input type="checkbox" id="sw-makima_notif" onchange="ts(this,'makima_notif')"><span class="track"><span class="knob"></span></span></label>
+      </div>
+    </div>
+
+    <div class="sec"><span class="n">03</span><span class="t">Module</span><span class="rule"></span></div>
+    <div class="nav-row" onclick="openOverlay('apps-overlay')">
+      <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+      <div class="txt"><div class="lbl">App Optimization</div><div class="desc">Per-app battery / performance modes</div></div>
+      <div class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+    </div>
+    <div class="nav-row" onclick="openOverlay('whitelist-overlay')">
+      <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
+      <div class="txt"><div class="lbl">Whitelist</div><div class="desc">Apps exempt from kill / freeze</div></div>
+      <div class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+    </div>
+
+    <div class="sec"><span class="n">04</span><span class="t">Personalize</span><span class="rule"></span></div>
+    <div class="nav-row" onclick="openCrop('banner')">
+      <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div>
+      <div class="txt"><div class="lbl">Change Banner</div><div class="desc">Upload a custom cover image</div></div>
+      <div class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+    </div>
+    <div class="nav-row" onclick="openCrop('avatar')">
+      <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></div>
+      <div class="txt"><div class="lbl">Change Profile Image</div><div class="desc">Upload a custom ioMakima avatar</div></div>
+      <div class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+    </div>
+
+    <div class="page-sub" style="margin:16px 4px 9px;font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-faint)">Font Style</div>
+    <div id="font-grid">
+      <div class="font-row" data-font="huashu" onclick="setFont('huashu')">
+        <div class="font-preview" style="font-family:'Bricolage Grotesque',sans-serif">Aa Gg 0123</div>
+        <div class="font-label">Default<br>Bricolage</div>
+        <div class="theme-check">✓</div>
+      </div>
+      <div class="font-row" data-font="rajdhani" onclick="setFont('rajdhani')">
+        <div class="font-preview" style="font-family:'Rajdhani',sans-serif;font-weight:700">Aa Gg 0123</div>
+        <div class="font-label">ID Card<br>Rajdhani</div>
+        <div class="theme-check">✓</div>
+      </div>
+      <div class="font-row" data-font="orbitron" onclick="setFont('orbitron')">
+        <div class="font-preview" style="font-family:'Orbitron',sans-serif;font-weight:700">Aa Gg 0123</div>
+        <div class="font-label">Tech Grid<br>Orbitron</div>
+        <div class="theme-check">✓</div>
+      </div>
+      <div class="font-row" data-font="saira" onclick="setFont('saira')">
+        <div class="font-preview" style="font-family:'Saira Condensed',sans-serif;font-weight:700">Aa Gg 0123</div>
+        <div class="font-label">Condensed<br>Saira</div>
+        <div class="theme-check">✓</div>
+      </div>
+      <div class="font-row" data-font="bebas" onclick="setFont('bebas')">
+        <div class="font-preview" style="font-family:'Bebas Neue',sans-serif">Aa Gg 0123</div>
+        <div class="font-label">Poster<br>Bebas Neue</div>
+        <div class="theme-check">✓</div>
+      </div>
+    </div>
+    <div class="page-sub" style="margin:14px 2px 0;text-align:center">
+      <span style="color:var(--red);font-size:11.5px;font-weight:700;cursor:pointer" onclick="resetPersonalization()">Restore banner, avatar &amp; font to default</span>
+    </div>
+
+    <div class="footnote">
+      ioBattery Pro × Makima Edition — V5.0<br>by Kyorizz<br>Magisk · KernelSU · APatch
+    </div>
+    <div class="tg-btn" onclick="openTelegram()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M21.8 2.15L1.4 10.1c-1.3.52-1.29 1.25-.24 1.57l5.15 1.61 11.94-7.53c.56-.34 1.08-.16.66.22L8.38 15.33l-.38 5.46c.56 0 .8-.26 1.11-.56l2.67-2.6 5.55 4.1c1.02.56 1.75.27 2-1L22.91 3.4c.38-1.53-.57-2.22-1.11-1.25z" fill="#29B6F6"/></svg>
+      <span style="color:#29B6F6">Join Telegram Channel</span>
+    </div>
+
+
+  </div>
+
+  <!-- ════════════════ TWEAKS ════════════════ -->
+  <div class="tab-content" id="tab-tweaks">
+
+    <div class="page-head">
+      <div class="page-eyebrow">Visual System</div>
+      <div class="page-title">Tweaks</div>
+    </div>
+
+    <div class="sec" style="margin-top:4px"><span class="n">01</span><span class="t">Color Palette</span><span class="rule"></span></div>
+    <div id="theme-grid">
+      <div class="theme-row" data-theme="huashu" onclick="setTheme('huashu')">
+        <div class="half" style="background:#d97757;color:#1a0d07">Terracotta</div>
+        <div class="half" style="background:#0a0a09;color:#f3efe4">Black</div>
+        <div class="theme-check">✓</div>
+      </div>
+      <div class="theme-row" data-theme="maroon" onclick="setTheme('maroon')">
+        <div class="half" style="background:#7a2333;color:#f3efe4">Maroon</div>
+        <div class="half" style="background:#0a0a09;color:#f3efe4">Black</div>
+        <div class="theme-check">✓</div>
+      </div>
+      <div class="theme-row" data-theme="navy" onclick="setTheme('navy')">
+        <div class="half" style="background:#4a6da8;color:#0c1118">Navy</div>
+        <div class="half" style="background:#0a0a09;color:#f3efe4">Black</div>
+        <div class="theme-check">✓</div>
+      </div>
+      <div class="theme-row" data-theme="camel" onclick="setTheme('camel')">
+        <div class="half" style="background:#c19a6b;color:#211705">Camel</div>
+        <div class="half" style="background:#0a0a09;color:#f3efe4">Black</div>
+        <div class="theme-check">✓</div>
+      </div>
+    </div>
+    <div class="page-sub" style="margin:2px 2px 0">Canvas stays black for OLED + readability — only the accent and card tone shift per palette.</div>
+
+    <div class="sec"><span class="n">02</span><span class="t">Glass Lab</span><span class="rule"></span></div>
+    <div class="slider-card">
+      <div class="head"><span class="name">Panel opacity</span><span class="readout" id="glass-alpha-val">96%</span></div>
+      <input type="range" min="0" max="100" value="96" id="sl-glass-alpha" oninput="onGlassChange()">
+    </div>
+    <div class="slider-card">
+      <div class="head"><span class="name">Blur radius</span><span class="readout" id="glass-blur-val">20px</span></div>
+      <input type="range" min="0" max="40" value="20" id="sl-glass-blur" oninput="onGlassChange()">
+    </div>
+    <div class="slider-card">
+      <div class="head"><span class="name">Border strength</span><span class="readout" id="glass-border-val">8%</span></div>
+      <input type="range" min="0" max="20" value="8" id="sl-glass-border" oninput="onGlassChange()">
+    </div>
+    <div class="bar-card" id="glass-preview" style="text-align:center;padding:20px;font-family:var(--mono);font-size:11px;color:var(--text-dim)">
+      Live preview — this card reflects your settings
+    </div>
+
+    <div class="sec"><span class="n">03</span><span class="t">Diagnostics</span><span class="rule"></span></div>
+    <div class="nav-row" onclick="openOverlay('logs-overlay')">
+      <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+      <div class="txt"><div class="lbl">System Log</div><div class="desc">service.sh runtime log, last 120 lines</div></div>
+      <div class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+    </div>
+    <div class="nav-row" onclick="openOverlay('perf-overlay')">
+      <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+      <div class="txt"><div class="lbl">Performance Monitor</div><div class="desc">CPU, temperature, voltage, battery health</div></div>
+      <div class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+    </div>
+
+    <div class="footnote">
+      ioBattery Pro × Makima Edition — V5.0<br>by Kyorizz · Huashu visual system<br><br>
+      Magisk · KernelSU · APatch<br><br>
+      <a href="https://t.me/Korie_Andriod_sf" style="color:var(--accent)">t.me/Korie_Andriod_sf</a>
+    </div>
+
+  </div>
+
+  <nav id="bottom-nav">
+    <div class="nav-tab active" data-tab="home" onclick="switchTab('home')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span>Home</span>
+    </div>
+    <div class="nav-tab" data-tab="features" onclick="switchTab('features')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      <span>Features</span>
+    </div>
+    <div class="nav-tab" data-tab="makima" onclick="switchTab('makima')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      <span>Makima</span>
+    </div>
+    <div class="nav-tab" data-tab="tweaks" onclick="switchTab('tweaks')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="20" y2="12"/><line x1="12" y1="18" x2="20" y2="18"/><circle cx="4" cy="6" r="2"/><circle cx="4" cy="18" r="2"/><circle cx="6" cy="12" r="2"/></svg>
+      <span>Tweaks</span>
+    </div>
+  </nav>
+
+  <!-- ════════════════ PERFORMANCE MONITOR OVERLAY ════════════════ -->
+  <div class="overlay" id="perf-overlay">
+    <div class="overlay-bar">
+      <div class="back-btn" onclick="closeOverlay('perf-overlay')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></div>
+      <h2>Performance Monitor</h2>
+      <div class="live-chip"><div class="live-dot"></div>LIVE</div>
+    </div>
+    <div class="overlay-body" id="perf-body">
+      <div class="sec" style="margin-top:0"><span class="n">01</span><span class="t">Live Readout</span><span class="rule"></span></div>
+      <div class="bar-card">
+        <div class="bar-row">
+          <div class="bar-row-head"><span class="k">CPU usage</span><span class="v" id="p-cpu-val">—%</span></div>
+          <div class="bar-track"><div class="bar-fill" id="p-cpu-bar"></div></div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-row-head"><span class="k">Battery temp</span><span class="v" id="p-temp-val">—°C</span></div>
+          <div class="bar-track"><div class="bar-fill" id="p-temp-bar"></div></div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-row-head"><span class="k">CPU temp</span><span class="v" id="p-cputemp-val">—°C</span></div>
+          <div class="bar-track"><div class="bar-fill" id="p-cputemp-bar"></div></div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-row-head"><span class="k">Voltage</span><span class="v" id="p-volt-val">— mV</span></div>
+          <div class="bar-track"><div class="bar-fill" id="p-volt-bar"></div></div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-row-head"><span class="k">Current draw</span><span class="v" id="p-cur-val">— mA</span></div>
+          <div class="bar-track"><div class="bar-fill" id="p-cur-bar"></div></div>
+        </div>
+      </div>
+
+      <div class="sec"><span class="n">02</span><span class="t">Battery Health</span><span class="rule"></span></div>
+      <div class="stat-row">
+        <div class="stat-card" style="cursor:default">
+          <div class="lbl">Health</div>
+          <div class="val" id="p-health-pct">—%</div>
+          <div class="hint" id="p-health-status">—</div>
+        </div>
+        <div class="stat-card" style="cursor:default">
+          <div class="lbl">Design capacity</div>
+          <div class="val" id="p-charge-full">— mAh</div>
+          <div class="hint">Reported full charge</div>
+        </div>
+      </div>
+
+      <div class="sec"><span class="n">03</span><span class="t">Module Compatibility</span><span class="rule"></span></div>
+      <div class="compat-row" id="p-compat-row">
+        <div class="compat-chip"><span>AZenith</span><div class="d"></div></div>
+        <div class="compat-chip"><span>Encore</span><div class="d"></div></div>
+        <div class="compat-chip"><span>Project Raco</span><div class="d"></div></div>
+        <div class="compat-chip"><span>RaiRin AI</span><div class="d"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════ LOGS OVERLAY ════════════════ -->
+  <div class="overlay" id="logs-overlay">
+    <div class="overlay-bar">
+      <div class="back-btn" onclick="closeOverlay('logs-overlay')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></div>
+      <h2>System Log</h2>
+    </div>
+    <div class="overlay-body" id="logs-body">
+      <div class="console" id="full-console" style="max-height:none"></div>
+      <button class="danger-btn" style="margin-top:14px" onclick="reloadLogs()">Refresh</button>
+    </div>
+  </div>
+
+  <!-- ════════════════ APP OPTIMIZATION OVERLAY ════════════════ -->
+  <div class="overlay" id="apps-overlay">
+    <div class="overlay-bar">
+      <div class="back-btn" onclick="closeOverlay('apps-overlay')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></div>
+      <h2>App Optimization</h2>
+    </div>
+    <div class="overlay-body" id="apps-body">
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="app-search" placeholder="Search apps…" oninput="filterApps(this.value)">
+      </div>
+      <div class="seg">
+        <button class="active" id="seg-user" onclick="toggleSysApps(false)">User Apps</button>
+        <button id="seg-sys" onclick="toggleSysApps(true)">System Apps</button>
+      </div>
+      <div id="app-list"><div class="empty-state">Loading app list…</div></div>
+    </div>
+  </div>
+
+  <!-- ════════════════ WHITELIST OVERLAY ════════════════ -->
+  <div class="overlay" id="whitelist-overlay">
+    <div class="overlay-bar">
+      <div class="back-btn" onclick="closeOverlay('whitelist-overlay')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></div>
+      <h2>Whitelist</h2>
+    </div>
+    <div class="overlay-body" id="whitelist-body">
+      <div class="search-box">
+        <input type="text" id="wl-input" placeholder="com.package.name">
+        <button class="qa-n" style="font-family:var(--mono);color:var(--accent);font-weight:800;background:none;border:none" onclick="addWhitelist()">ADD</button>
+      </div>
+      <div id="wl-list"><div class="empty-state">Loading whitelist…</div></div>
+    </div>
+  </div>
+
+  <!-- ════════════════ IMAGE CROP OVERLAY (banner + avatar) ════════════════ -->
+  <div class="overlay" id="crop-overlay">
+    <div class="overlay-bar">
+      <div class="back-btn" onclick="closeCrop()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></div>
+      <h2 id="crop-title">Change Banner</h2>
+      <button class="save-btn" id="crop-save-btn" onclick="saveCrop()" disabled>Save</button>
+    </div>
+    <input type="file" id="crop-file-input" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="onCropFileChosen(event)">
+    <div class="crop-stage">
+      <div class="crop-frame" id="crop-frame">
+        <img id="crop-img" draggable="false" alt="">
+        <div class="crop-empty" id="crop-empty-state">
+          <button class="cm-btn-solid" onclick="document.getElementById('crop-file-input').click()">Choose Image</button>
+          <div class="crop-hint">JPG · PNG · WEBP — up to <span id="crop-size-limit">5MB</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="crop-controls">
+      <div class="crop-zoom-wrap" id="crop-zoom-wrap" style="display:none">
+        <span class="crop-zoom-lbl">ZOOM</span>
+        <input type="range" id="crop-zoom" min="100" max="320" value="100" oninput="onCropZoom(this.value)">
+      </div>
+      <div class="crop-actions" id="crop-actions" style="display:none">
+        <button class="cm-btn-ghost" onclick="document.getElementById('crop-file-input').click()">Replace</button>
+        <button class="cm-btn-ghost danger" onclick="restoreCropDefault()">Restore Default</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════ CONFIRM DIALOG ════════════════ -->
+  <div id="confirm-overlay">
+    <div class="confirm-sheet">
+      <h3 id="confirm-title">Confirm</h3>
+      <p id="confirm-desc"></p>
+      <div class="confirm-actions">
+        <button class="btn-ghost" onclick="cNo()">Cancel</button>
+        <button class="btn-solid" onclick="cYes()">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+</div>
+
+<script>
+/* ════════════════════════════════════════════════════════════════════════
+   ioBattery Pro × Makima Edition — V5.0 "Huashu" WebUI
+   Bridge layer: identical action set / param formats as cgi-bin/api.sh.
+   Dual transport — KernelSU WebView (window.ksu.exec) or Magisk busybox
+   httpd (fetch /cgi-bin/api.sh). Nothing in api.sh was modified.
+   ════════════════════════════════════════════════════════════════════════ */
+
+const IS_KSU    = typeof window.ksu !== 'undefined';
+const MODDIR    = '/data/adb/modules/iobattery';
+const IOB_DIR   = '/data/adb/ioBattery';
+const CONFIG    = IOB_DIR + '/config.prop';
+const GLASS_CONF= IOB_DIR + '/glass.prop';
+const OPT       = IOB_DIR + '/app_optimize.prop';
+const WHITELIST = IOB_DIR + '/whitelist.txt';
+
+let API_TOKEN   = '';
+let _tokenReady = false;
+
+const CFG = {};                 // cached config.prop key → value (strings)
+const S = {                     // live telemetry state
+  level: 0, status: 'Unknown', temp: 0, cpuTemp: 0, voltage: 0, current: 0,
+  cpu: 0, profile: 'balanced', battHealth: 100, battHealthWarn: 'ok', chargeFull: 0,
+};
+
+/* ───────────────────────── bridge: KSU shell side ───────────────────────── */
+
+function _cfgSetCmd(key, val) {
+  return 'mkdir -p "' + IOB_DIR + '" 2>/dev/null; touch "' + CONFIG + '" 2>/dev/null; chmod 666 "' + CONFIG + '" 2>/dev/null; '
+       + 'tmp="' + CONFIG + '.tmp.$$"; grep -v "^' + key + '=" "' + CONFIG + '" 2>/dev/null > "$tmp" || true; '
+       + 'echo "' + key + '=' + val + '" >> "$tmp"; mv "$tmp" "' + CONFIG + '"; chmod 666 "' + CONFIG + '" 2>/dev/null';
+}
+
+function _ksuExec(cmd) {
+  return new Promise(resolve => {
+    try {
+      window.ksu.exec(cmd, {}, function (a, b) {
+        const out = typeof a === 'number' ? (b || '') : (a || '');
+        resolve({ ok: true, output: String(out).trim() });
+      });
+    } catch (e) { resolve({ ok: false, error: e.message }); }
+  });
+}
+
+function _ksuCall(action, param) {
+  let cmd = 'echo ok';
+  switch (action) {
+
+    case 'set_profile':
+      cmd = 'mkdir -p "' + IOB_DIR + '" 2>/dev/null; echo "' + param + '" > "' + IOB_DIR + '/profile"; '
+          + 'chmod 666 "' + IOB_DIR + '/profile" 2>/dev/null; '
+          + _cfgSetCmd('profile', param) + '; ' + _cfgSetCmd('user_override', '1');
+      break;
+
+    case 'get_config':
+      cmd = 'mkdir -p "' + IOB_DIR + '" 2>/dev/null; P=""; '
+          + '[ -f "' + IOB_DIR + '/profile" ] && P=$(cat "' + IOB_DIR + '/profile" 2>/dev/null | tr -d " \\t\\r\\n"); '
+          + '[ -z "$P" ] && [ -f "' + CONFIG + '" ] && P=$(grep "^profile=" "' + CONFIG + '" 2>/dev/null | tail -1 | cut -d= -f2 | tr -d " \\t\\r\\n"); '
+          + '[ -z "$P" ] && P=balanced; echo "profile=$P"; '
+          + '[ -f "' + CONFIG + '" ] && grep -v "^#\\|^[[:space:]]*$\\|^profile=" "' + CONFIG + '" 2>/dev/null || true';
+      break;
+
+    case 'save_cfg':
+      cmd = _cfgSetCmd(param.key, param.val);
+      break;
+
+    case 'list_pkgs':
+      cmd = 'UA="' + IOB_DIR + '/user_apps.txt"; '
+          + 'if [ -s "$UA" ]; then cat "$UA"; '
+          + 'elif [ -f /data/system/packages.list ]; then awk \'$2>=10000{print $1}\' /data/system/packages.list 2>/dev/null | grep "\\." | sort; '
+          + 'else pm list packages -3 2>/dev/null | sed "s/^package://"; fi';
+      break;
+
+    case 'list_pkgs_sys':
+      cmd = 'SA="' + IOB_DIR + '/sys_apps.txt"; '
+          + 'if [ -s "$SA" ]; then cat "$SA"; '
+          + 'elif [ -f /data/system/packages.list ]; then awk \'$2<10000{print $1}\' /data/system/packages.list 2>/dev/null | grep "\\." | sort; '
+          + 'else pm list packages -s 2>/dev/null | sed "s/^package://"; fi';
+      break;
+
+    case 'refresh_pkglist':
+      cmd = 'mkdir -p "' + IOB_DIR + '" 2>/dev/null; UA="' + IOB_DIR + '/user_apps.txt"; SA="' + IOB_DIR + '/sys_apps.txt"; PL=/data/system/packages.list; '
+          + 'if [ -f "$PL" ] && [ -s "$PL" ]; then '
+          + 'awk \'$2>=10000{print $1}\' "$PL" 2>/dev/null | grep "\\." | sort > "$UA"; '
+          + 'awk \'$2<10000{print $1}\' "$PL" 2>/dev/null | grep "\\." | sort > "$SA"; chmod 644 "$UA" "$SA" 2>/dev/null; fi; '
+          + '[ -s "$UA" ] || pm list packages -3 2>/dev/null | sed "s/^package://" | grep "\\." | sort > "$UA" 2>/dev/null; '
+          + '[ -s "$SA" ] || pm list packages -s 2>/dev/null | sed "s/^package://" | grep "\\." | sort > "$SA" 2>/dev/null; '
+          + 'chmod 644 "$UA" "$SA" 2>/dev/null; CNT=$(wc -l < "$UA" 2>/dev/null | tr -d " "); echo "count=$CNT"';
+      break;
+
+    case 'set_app_opt': {
+      const pkg = param.split(':')[0], mode = param.split(':')[1];
+      cmd = 'mkdir -p "' + IOB_DIR + '" 2>/dev/null; touch "' + OPT + '" 2>/dev/null; chmod 666 "' + OPT + '" 2>/dev/null; '
+          + 'tmp="' + OPT + '.tmp.$$"; grep -v "^' + pkg + '=" "' + OPT + '" 2>/dev/null > "$tmp" || true; '
+          + (mode !== 'none' ? 'echo "' + pkg + '=' + mode + '" >> "$tmp"; ' : '')
+          + 'mv "$tmp" "' + OPT + '"; chmod 666 "' + OPT + '" 2>/dev/null';
+      break;
+    }
+
+    case 'read_opt':
+      cmd = '[ -f "' + OPT + '" ] && cat "' + OPT + '" 2>/dev/null || true';
+      break;
+
+    case 'whitelist_list':
+      cmd = '[ -f "' + WHITELIST + '" ] && grep -v "^#\\|^[[:space:]]*$" "' + WHITELIST + '" 2>/dev/null || true';
+      break;
+
+    case 'whitelist_add':
+      cmd = 'mkdir -p "' + IOB_DIR + '" 2>/dev/null; touch "' + WHITELIST + '" 2>/dev/null; chmod 644 "' + WHITELIST + '" 2>/dev/null; '
+          + 'grep -qxF "' + param + '" "' + WHITELIST + '" 2>/dev/null || echo "' + param + '" >> "' + WHITELIST + '"; echo ok';
+      break;
+
+    case 'whitelist_remove':
+      cmd = '[ -f "' + WHITELIST + '" ] && { tmp="' + WHITELIST + '.tmp.$$"; grep -vxF "' + param + '" "' + WHITELIST + '" > "$tmp" 2>/dev/null; mv "$tmp" "' + WHITELIST + '"; }; echo ok';
+      break;
+
+    case 'kill_bg':
+      cmd = 'mkdir -p "' + IOB_DIR + '" 2>/dev/null; touch "' + IOB_DIR + '/kill_bg.trigger" 2>/dev/null; '
+          + 'chmod 600 "' + IOB_DIR + '/kill_bg.trigger" 2>/dev/null; echo ok';
+      break;
+    case 'force_doze': cmd = 'dumpsys deviceidle force-idle 2>/dev/null; echo ok'; break;
+
+    case 'set_wifi_boost':
+      cmd = _cfgSetCmd('wifi_boost', param) + '; '
+          + (param === '1'
+              ? 'sh "' + MODDIR + '/tools/wifi_boost.sh" boost 2>/dev/null &'
+              : 'sh "' + MODDIR + '/tools/wifi_boost.sh" reset 2>/dev/null &')
+          + '; echo ok';
+      break;
+
+    case 'set_wifi_bonding_feature': {
+      const k = param.split('=')[0], v = param.split('=')[1];
+      cmd = _cfgSetCmd(k, v) + '; echo ok';
+      break;
+    }
+
+    case 'makima_notif':
+      cmd = _cfgSetCmd('makima_notif', param) + '; echo ok';
+      break;
+
+    case 'compat_status':
+      cmd = 'A=$([ -d /data/adb/modules/AZenith ] && [ ! -f /data/adb/modules/AZenith/remove ] && echo 1 || echo 0); '
+          + 'E=$([ -d /data/adb/modules/encore ] && [ ! -f /data/adb/modules/encore/remove ] && echo 1 || echo 0); '
+          + 'R=$([ -d /data/adb/modules/ProjectRaco ] && [ ! -f /data/adb/modules/ProjectRaco/remove ] && echo 1 || echo 0); '
+          + 'RR=$([ -d /data/adb/modules/RaiRin-AI ] && [ ! -f /data/adb/modules/RaiRin-AI/remove ] && echo 1 || echo 0); '
+          + 'echo azenith=$A; echo encore=$E; echo raco=$R; echo rairin=$RR';
+      break;
+
+    case 'save_glass':
+      cmd = 'mkdir -p "' + IOB_DIR + '" 2>/dev/null; printf "' + param + '" | tr "," "\\n" > "' + GLASS_CONF + '"; chmod 666 "' + GLASS_CONF + '" 2>/dev/null; echo ok';
+      break;
+
+    case 'get_glass':
+      cmd = '[ -f "' + GLASS_CONF + '" ] && cat "' + GLASS_CONF + '" 2>/dev/null || echo "alpha=96\nblur=20\nborder=8"';
+      break;
+
+    case 'emergency_cooldown':
+      cmd = 'TOTAL=0; for d in /sys/devices/system/cpu/cpu[0-9]*; do [ -d "$d" ] && TOTAL=$((TOTAL+1)); done; [ "$TOTAL" -eq 0 ] && TOTAL=8; '
+          + 'HALF=$((TOTAL/2)); [ "$HALF" -lt 1 ] && HALF=1; i=$HALF; '
+          + 'while [ "$i" -lt "$TOTAL" ]; do echo 0 > /sys/devices/system/cpu/cpu${i}/online 2>/dev/null || true; i=$((i+1)); done; '
+          + 'settings put global low_power 1 2>/dev/null; echo ok; '
+          + '(sleep 120; j=$HALF; while [ "$j" -lt "$TOTAL" ]; do echo 1 > /sys/devices/system/cpu/cpu${j}/online 2>/dev/null || true; j=$((j+1)); done; settings put global low_power 0 2>/dev/null) &';
+      break;
+
+    default: cmd = 'echo ok';
+  }
+  return _ksuExec(cmd);
+}
+
+/* ───────────────────────── bridge: httpd CGI side ───────────────────────── */
+
+async function ensureToken() {
+  if (IS_KSU || _tokenReady) return true;
+  try {
+    const r = await _cgiCall('get_token');
+    if (r && r.ok && r.token) { API_TOKEN = r.token; _tokenReady = true; return true; }
+  } catch (e) {}
+  return false;
+}
+
+async function _cgiCall(action, param) {
+  try {
+    const paramStr = (param !== undefined && param !== null)
+      ? encodeURIComponent(typeof param === 'object' ? JSON.stringify(param) : String(param)) : '';
+    const tokenQS = (action === 'get_token' || action === 'status') ? '' : ('&token=' + encodeURIComponent(API_TOKEN));
+    const url = '/cgi-bin/api.sh?action=' + encodeURIComponent(action) + '&param=' + paramStr + tokenQS + '&t=' + Date.now();
+    const ctrl = new AbortController(); const tid = setTimeout(() => ctrl.abort(), 8000);
+    const r = await fetch(url, { cache: 'no-store', signal: ctrl.signal });
+    clearTimeout(tid);
+    return await r.json();
+  } catch (e) { return { ok: false, error: e.message }; }
+}
+
+async function apiCall(action, param) {
+  if (IS_KSU) return _ksuCall(action, param);
+  if (!_tokenReady && action !== 'get_token' && action !== 'status') await ensureToken();
+  return _cgiCall(action, param);
+}
+
+/* ───────────────────────── status (sysfs telemetry) ───────────────────────── */
+
+function _ksuStatus() {
+  const cmd = [
+    'B=/sys/class/power_supply/battery',
+    'echo level=$(cat $B/capacity 2>/dev/null || echo -1)',
+    'echo temp_raw=$(cat $B/temp 2>/dev/null || echo 0)',
+    'echo status=$(cat $B/status 2>/dev/null || echo Unknown)',
+    'echo voltage_raw=$(cat $B/voltage_now 2>/dev/null || echo 0)',
+    'echo current_raw=$(cat $B/current_now 2>/dev/null || echo 0)',
+    'echo cf_raw=$(cat $B/charge_full 2>/dev/null || echo 0)',
+    'echo cd_raw=$(cat $B/charge_full_design 2>/dev/null || echo 0)',
+    'CZ=""; for z in /sys/class/thermal/thermal_zone*/type; do t=$(cat "$z" 2>/dev/null); case "$t" in *cpu*|*CPU*|*cluster*|*core*) d=$(dirname "$z"); r=$(cat "$d/temp" 2>/dev/null||echo 0); if [ "$r" -gt 100 ] 2>/dev/null && [ "$r" -lt 1500 ] 2>/dev/null; then CZ="$d"; break; fi;; esac; done',
+    '[ -z "$CZ" ] && CZ=/sys/class/thermal/thermal_zone0',
+    'echo cputemp_raw=$(cat "$CZ/temp" 2>/dev/null || echo 0)',
+    'P=""; [ -f "' + IOB_DIR + '/profile" ] && P=$(cat "' + IOB_DIR + '/profile" 2>/dev/null | tr -d " \\t\\r\\n")',
+    '[ -z "$P" ] && [ -f "' + CONFIG + '" ] && P=$(grep "^profile=" "' + CONFIG + '" 2>/dev/null | tail -1 | cut -d= -f2 | tr -d " \\t\\r\\n")',
+    '[ -z "$P" ] && P=balanced; echo profile=$P',
+    '[ -f "' + MODDIR + '/tools/cpu_usage.sh" ] && echo cpu_pct=$(sh "' + MODDIR + '/tools/cpu_usage.sh" 2>/dev/null) || echo cpu_pct=0',
+  ].join('; ');
+
+  return _ksuExec(cmd).then(r => {
+    const kv = {};
+    (r.output || '').split('\n').forEach(line => {
+      const i = line.indexOf('=');
+      if (i > 0) kv[line.slice(0, i).trim()] = line.slice(i + 1).trim();
+    });
+    const cf = parseInt(kv.cf_raw) || 0, cd = parseInt(kv.cd_raw) || 0;
+    const health = cd > 0 ? Math.round((cf / cd) * 100) : 100;
+    let cpuTempRaw = parseInt(kv.cputemp_raw) || 0;
+    let cpuTempDec = cpuTempRaw > 10000 ? Math.round(cpuTempRaw / 100) : cpuTempRaw;
+    let cur = Math.abs(parseInt(kv.current_raw) || 0);
+    if (cur > 100000) cur = cur / 1000;
+    return {
+      level: parseInt(kv.level) >= 0 ? parseInt(kv.level) : 0,
+      status: kv.status || 'Unknown',
+      temp: (parseInt(kv.temp_raw) || 0) / 10,
+      cpuTemp: cpuTempDec / 10,
+      voltage: Math.round(Math.abs(parseInt(kv.voltage_raw) || 0) / 1000),
+      current: Math.round(cur),
+      profile: /^(eco|balanced|beast|gaming)$/.test(kv.profile) ? kv.profile : 'balanced',
+      battHealth: Math.max(0, Math.min(100, health)),
+      battHealthWarn: health < 70 ? 'severe' : health < 80 ? 'warn' : 'ok',
+      chargeFull: Math.round(cf / 1000),
+      cpu: parseInt(kv.cpu_pct) || 0,
+    };
+  });
+}
+
+async function getStatus() {
+  if (IS_KSU) return _ksuStatus();
+  const r = await apiCall('status');
+  if (!r || r.ok === false) return null;
+  return {
+    level: +r.level || 0, status: r.status || 'Unknown', temp: +r.temp || 0,
+    cpuTemp: +r.cpu_temp || 0, voltage: +r.voltage || 0, current: +r.current || 0,
+    profile: r.profile || 'balanced', cpu: +r.cpu || 0,
+    battHealth: +r.batt_health_pct || 100, battHealthWarn: r.batt_health_warning || 'ok',
+    chargeFull: +r.charge_full_mah || 0,
+  };
+}
+
+/* ───────────────────────── config read/write ───────────────────────── */
+
+async function writeConfig(key, val) {
+  CFG[key] = String(val);
+  const r = await apiCall('save_cfg', { key, val: String(val) });
+  if (!r || r.ok === false) toast('⚠ save failed: ' + key);
+  return r;
+}
+
+async function loadConfig() {
+  const r = await apiCall('get_config');
+  let raw = (r && (r.output || r.config)) || '';
+  raw.split(/[|\n]/).forEach(line => {
+    const i = line.indexOf('=');
+    if (i > 0) {
+      const k = line.slice(0, i).trim(), v = line.slice(i + 1).trim();
+      if (k && !k.startsWith('#') && !k.startsWith('count')) CFG[k] = v;
+    }
+  });
+}
+
+const TOGGLE_KEYS = [
+  'charge_limit_enable', 'temp_charge_control', 'fast_charge', 'charging_bypass',
+  'auto_low_power', 'smart_fps', 'lmk_tune', 'memory_tuning', 'tcp_tuning',
+  'wakelock_reduce', 'scan_reduce', 'bg_freeze', 'aggressive_doze', 'mtk_logger',
+  'touch_latency', 'makima_notif',
+];
+const WIFI_SUB_KEYS = ['wifi_bonding_engine', 'wifi_scan_low_mode', 'wifi_latency_reduce', 'wifi_net_stability'];
+
+function applyConfigToUI() {
+  TOGGLE_KEYS.forEach(k => {
+    const el = document.getElementById('sw-' + k);
+    if (el) el.checked = CFG[k] === '1';
+  });
+  const wb = document.getElementById('sw-wifi_boost');
+  if (wb) wb.checked = CFG.wifi_boost === '1';
+  document.querySelectorAll('.wifi-sub').forEach(r => r.classList.toggle('off', CFG.wifi_boost !== '1'));
+  WIFI_SUB_KEYS.forEach(k => {
+    const el = document.getElementById('sw-' + k);
+    if (el) el.checked = CFG[k] === '1';
+  });
+
+  setSliderUI('sl-charge_limit', 'chg-limit-val', CFG.charge_limit || 80);
+  setSliderUI('sl-temp_max', 'temp-max-val', CFG.temp_max || 43);
+  setSliderUI('sl-low_threshold', 'low-thr-val', CFG.low_threshold || 20);
+
+  setActiveProfile(CFG.profile || 'balanced');
+}
+
+function setSliderUI(slId, valId, v) {
+  const sl = document.getElementById(slId), lb = document.getElementById(valId);
+  if (sl) sl.value = v;
+  if (lb) lb.textContent = v;
+}
+
+/* ───────────────────────── generic UI bindings ───────────────────────── */
+
+function ts(el, key) {
+  const v = el.checked ? '1' : '0';
+  CFG[key] = v;
+  writeConfig(key, v);
+  addFeatLog((el.checked ? 'OK ' : '·· ') + key.replace(/_/g, ' ') + (el.checked ? ' enabled' : ' disabled'));
+  toast((el.checked ? 'Enabled — ' : 'Disabled — ') + key.replace(/_/g, ' '));
+}
+
+function sv(slId, valId, key) {
+  const v = document.getElementById(slId).value;
+  document.getElementById(valId).textContent = v;
+  CFG[key] = v;
+  writeConfig(key, v);
+}
+
+async function tsWifiBoost(el) {
+  const on = el.checked, v = on ? '1' : '0';
+  CFG.wifi_boost = v;
+  const r = await apiCall('set_wifi_boost', v);
+  if (!r || r.ok === false) { el.checked = !on; toast('⚠ WiFi Boost toggle failed'); return; }
+  toast((on ? 'Enabled' : 'Disabled') + ' — WiFi Boost');
+  addFeatLog((on ? 'OK ' : '·· ') + 'WiFi Boost ' + (on ? 'enabled' : 'disabled'));
+  document.querySelectorAll('.wifi-sub').forEach(r2 => r2.classList.toggle('off', !on));
+  if (!on) WIFI_SUB_KEYS.forEach(k => { const e = document.getElementById('sw-' + k); if (e) e.checked = false; CFG[k] = '0'; });
+}
+
+async function tsWifiFeature(el, key) {
+  if (CFG.wifi_boost !== '1') { el.checked = false; toast('Enable WiFi Boost master switch first'); return; }
+  const on = el.checked, v = on ? '1' : '0';
+  CFG[key] = v;
+  await apiCall('set_wifi_bonding_feature', key + '=' + v);
+  toast((on ? 'Enabled' : 'Disabled') + ' — ' + key.replace(/_/g, ' '));
+}
+
+/* ───────────────────────── profiles / quick actions ───────────────────────── */
+
+function setActiveProfile(p) {
+  ['eco', 'balanced', 'beast', 'gaming'].forEach(name => {
+    const el = document.getElementById('pf-' + name);
+    if (el) el.classList.toggle('active', name === p);
+  });
+  const lbl = document.getElementById('profile-stat-val');
+  if (lbl) lbl.textContent = p.charAt(0).toUpperCase() + p.slice(1);
+}
+
+async function setProf(p) {
+  setActiveProfile(p);
+  CFG.profile = p;
+  lockProfile(4000);
+  const r = await apiCall('set_profile', p);
+  if (!r || r.ok === false) { toast('⚠ profile switch failed'); return; }
+  addFeatLog('OK profile → ' + p);
+  toast('Profile set — ' + p.charAt(0).toUpperCase() + p.slice(1));
+  refreshStatus();
+}
+
+async function qa(action) {
+  if (action === 'killbg') {
+    await apiCall('kill_bg');
+    addFeatLog('OK kill queued — service applies whitelist + thermal checks');
+    toast('Background kill queued');
+  } else if (action === 'doze') {
+    await apiCall('force_doze');
+    addFeatLog('OK forced device idle');
+    toast('Forced Doze');
+  }
+}
+
+function trigEmergency() {
+  confirmDialog(
+    'Emergency Cool Down',
+    'Offlines half your CPU cores and enables system low-power mode for 2 minutes. Use only if the device is dangerously hot.',
+    async () => {
+      await apiCall('emergency_cooldown');
+      addFeatLog('!! emergency cooldown triggered — cores halved for 120s');
+      toast('Cooling down — cores halved for 2 min');
+    }
+  );
+}
+
+function addFeatLog(msg) {
+  const c = document.getElementById('feat-console');
+  if (!c) return;
+  const t = new Date().toLocaleTimeString([], { hour12: false });
+  const row = document.createElement('div');
+  row.className = 'ln';
+  row.innerHTML = '<span class="t">[' + t + ']</span> ' + esc(msg);
+  c.appendChild(row);
+  c.scrollTop = c.scrollHeight;
+  while (c.children.length > 40) c.removeChild(c.firstChild);
+}
+
+function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+/* ───────────────────────── tabs / overlays / toast / confirm ───────────────────────── */
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+  const t = document.getElementById('tab-' + tab);
+  if (t) t.classList.add('active');
+  const n = document.querySelector('.nav-tab[data-tab="' + tab + '"]');
+  if (n) n.classList.add('active');
+}
+
+function openOverlay(id) {
+  document.getElementById(id).classList.add('show');
+  if (id === 'apps-overlay') loadApps();
+  if (id === 'whitelist-overlay') loadWhitelist();
+  if (id === 'logs-overlay') reloadLogs();
+  if (id === 'perf-overlay') refreshStatus();
+}
+function closeOverlay(id) { document.getElementById(id).classList.remove('show'); }
+
+let _toastT;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(_toastT);
+  _toastT = setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+let _confirmFn = null;
+function confirmDialog(title, desc, fn) {
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-desc').textContent = desc;
+  _confirmFn = fn;
+  document.getElementById('confirm-overlay').classList.add('show');
+}
+function cYes() { document.getElementById('confirm-overlay').classList.remove('show'); const fn = _confirmFn; _confirmFn = null; if (fn) fn(); }
+function cNo()  { document.getElementById('confirm-overlay').classList.remove('show'); _confirmFn = null; }
+
+function openTelegram() { window.open('https://t.me/Korie_Andriod_sf', '_blank'); }
+
+/* ───────────────────────── apps / whitelist ───────────────────────── */
+
+const APPSTATE = { sysMode: false, all: [], opt: {} };
+
+function _parsePkgs(raw) {
+  return (raw || '').split(/[|\n\r]/)
+    .map(l => l.replace(/^package:/, '').split(/\s/)[0].trim())
+    .filter(l => l.length > 2 && l.includes('.') && !/^#/.test(l) && !/^count=/.test(l));
+}
+
+async function loadApps() {
+  const list = document.getElementById('app-list');
+  list.innerHTML = '<div class="empty-state">Loading app list…</div>';
+  const action = APPSTATE.sysMode ? 'list_pkgs_sys' : 'list_pkgs';
+  let r = await apiCall(action);
+  let pkgs = _parsePkgs(r && (r.output || r.packages));
+  if (!pkgs.length) {
+    await apiCall('refresh_pkglist');
+    await new Promise(res => setTimeout(res, 1500));
+    r = await apiCall(action);
+    pkgs = _parsePkgs(r && (r.output || r.packages));
+  }
+  const optR = await apiCall('read_opt');
+  const opt = {};
+  (optR && optR.output || '').split(/[|\n\r]/).forEach(line => {
+    const i = line.indexOf('=');
+    if (i > 0) {
+      const pkg = line.slice(0, i).trim(), mode = line.slice(i + 1).trim();
+      if (pkg && ['none', 'low', 'medium', 'hard'].includes(mode)) opt[pkg] = mode;
+    }
+  });
+  APPSTATE.all = pkgs.map(pkg => ({ pkg, mode: opt[pkg] || 'none' }));
+  APPSTATE.opt = opt;
+  renderApps(APPSTATE.all);
+}
+
+function renderApps(apps) {
+  const list = document.getElementById('app-list');
+  if (!apps.length) { list.innerHTML = '<div class="empty-state">No apps found. Pull-to-retry from Settings → Apps.</div>'; return; }
+  const modeLbl = { none: 'OFF', low: 'LOW', medium: 'MED', hard: 'HARD' };
+  list.innerHTML = apps.map(a => {
+    const name = a.pkg.split('.').pop();
+    return '<div class="app-row"><div class="nm">' + esc(name) + '<br><span style="opacity:.45;font-size:10px">' + esc(a.pkg) + '</span></div>'
+      + '<div class="app-modes">' + ['none', 'low', 'medium', 'hard'].map(m =>
+        '<button class="' + (a.mode === m && m !== 'none' ? 'active' : '') + '" onclick="setAppMode(\'' + a.pkg + '\',\'' + m + '\',this)">' + modeLbl[m] + '</button>'
+      ).join('') + '</div></div>';
+  }).join('');
+}
+
+function filterApps(q) {
+  const f = APPSTATE.all.filter(a => a.pkg.toLowerCase().includes(q.toLowerCase()));
+  renderApps(f);
+}
+
+function toggleSysApps(sys) {
+  APPSTATE.sysMode = sys;
+  document.getElementById('seg-user').classList.toggle('active', !sys);
+  document.getElementById('seg-sys').classList.toggle('active', sys);
+  loadApps();
+}
+
+async function setAppMode(pkg, mode, btnEl) {
+  btnEl.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+  if (mode !== 'none') btnEl.classList.add('active');
+  await apiCall('set_app_opt', pkg + ':' + mode);
+  const a = APPSTATE.all.find(x => x.pkg === pkg);
+  if (a) a.mode = mode;
+  toast(pkg.split('.').pop() + ' → ' + mode);
+}
+
+async function loadWhitelist() {
+  const list = document.getElementById('wl-list');
+  list.innerHTML = '<div class="empty-state">Loading…</div>';
+  const r = await apiCall('whitelist_list');
+  const pkgs = ((r && r.output) || '').split(/[|\n\r]/).map(s => s.trim()).filter(Boolean);
+  if (!pkgs.length) { list.innerHTML = '<div class="empty-state">No protected apps yet.</div>'; return; }
+  list.innerHTML = pkgs.map(p =>
+    '<div class="app-row"><div class="nm">' + esc(p) + '</div>'
+    + '<div class="app-modes"><button onclick="removeWhitelist(\'' + p + '\')">REMOVE</button></div></div>'
+  ).join('');
+}
+
+async function addWhitelist() {
+  const input = document.getElementById('wl-input');
+  const pkg = input.value.trim();
+  if (!pkg || !pkg.includes('.')) { toast('Enter a valid package name'); return; }
+  await apiCall('whitelist_add', pkg);
+  input.value = '';
+  toast(pkg + ' protected');
+  loadWhitelist();
+}
+
+async function removeWhitelist(pkg) {
+  await apiCall('whitelist_remove', pkg);
+  toast(pkg + ' removed');
+  loadWhitelist();
+}
+
+/* ───────────────────────── logs ───────────────────────── */
+
+async function reloadLogs() {
+  const c = document.getElementById('full-console');
+  c.innerHTML = '<div class="ln"><span class="t">[—]</span> loading…</div>';
+  const r = await apiCall('logs');
+  const lines = ((r && r.output) || '').split(/[|\n]/).filter(Boolean);
+  if (!lines.length) { c.innerHTML = '<div class="ln"><span class="t">[—]</span> no log entries yet</div>'; return; }
+  c.innerHTML = lines.slice(-150).map(l => {
+    const cls = /error|fail/i.test(l) ? 'err' : /warn/i.test(l) ? 'warn' : '';
+    return '<div class="ln ' + cls + '">' + esc(l) + '</div>';
+  }).join('');
+  c.scrollTop = c.scrollHeight;
+}
+
+/* ───────────────────────── compat status ───────────────────────── */
+
+async function loadCompat() {
+  let data;
+  if (IS_KSU) {
+    const r = await apiCall('compat_status');
+    const kv = {};
+    (r.output || '').split('\n').forEach(l => { const i = l.indexOf('='); if (i > 0) kv[l.slice(0, i)] = l.slice(i + 1); });
+    data = { azenith: kv.azenith === '1', encore: kv.encore === '1', raco: kv.raco === '1', rairin: kv.rairin === '1' };
+  } else {
+    const r = await apiCall('compat_status');
+    data = r && r.ok !== false
+      ? { azenith: +r.azenith === 1, encore: +r.encore === 1, raco: +r.raco === 1, rairin: +r.rairin === 1 }
+      : { azenith: false, encore: false, raco: false, rairin: false };
+  }
+  const order = [data.azenith, data.encore, data.raco, data.rairin];
+  ['#compat-row', '#p-compat-row'].forEach(sel => {
+    const chips = document.querySelectorAll(sel + ' .compat-chip');
+    chips.forEach((chip, i) => chip.classList.toggle('on', !!order[i]));
+  });
+}
+
+/* ───────────────────────── glass lab ───────────────────────── */
+
+function _applyGlass(alpha, blur, border) {
+  let styleEl = document.getElementById('glass-dyn');
+  if (!styleEl) { styleEl = document.createElement('style'); styleEl.id = 'glass-dyn'; document.head.appendChild(styleEl); }
+  const bg = 0.55 + (alpha / 100) * 0.45;
+  const bd = (border / 20) * 0.22 + 0.04;
+  styleEl.textContent =
+    '.hero,.bar-card,.toggle-card,.nav-row,.slider-card,.console{'
+    + 'background:rgba(17,17,16,' + bg.toFixed(3) + ') !important;'
+    + 'border-color:rgba(255,255,255,' + bd.toFixed(3) + ') !important;'
+    + 'backdrop-filter:blur(' + blur + 'px);-webkit-backdrop-filter:blur(' + blur + 'px);}';
+  const prev = document.getElementById('glass-preview');
+  if (prev) prev.textContent = 'Live preview — opacity ' + alpha + '% · blur ' + blur + 'px · border ' + border + '%';
+}
+
+function onGlassChange() {
+  const a = +document.getElementById('sl-glass-alpha').value;
+  const b = +document.getElementById('sl-glass-blur').value;
+  const o = +document.getElementById('sl-glass-border').value;
+  document.getElementById('glass-alpha-val').textContent = a + '%';
+  document.getElementById('glass-blur-val').textContent = b + 'px';
+  document.getElementById('glass-border-val').textContent = o + '%';
+  _applyGlass(a, b, o);
+  clearTimeout(window._glassSaveT);
+  window._glassSaveT = setTimeout(() => apiCall('save_glass', 'alpha=' + a + ',blur=' + b + ',border=' + o), 400);
+}
+
+/* ───────────────────────── color palette ("old money" themes) ───────────────────────── */
+/* Pure cosmetic — persisted as config key "webui_theme" via the same save_cfg/get_config
+   path everything else uses. service.sh ignores unknown keys, so this never touches
+   module behaviour, only this page's CSS custom properties. */
+
+const THEMES = {
+  huashu: {
+    accent: '#d97757', accentTwo: '#c2603f', accentDeep: '#9c4a30',
+    accentSoft: 'rgba(217,119,87,.15)', accentSoft2: 'rgba(217,119,87,.32)',
+    paper: '#efe9dc', paperTwo: '#e3dac4', paperInk: '#18140e', paperHair: 'rgba(20,16,10,.14)',
+  },
+  maroon: {
+    accent: '#9c3349', accentTwo: '#7a2333', accentDeep: '#5e1a27',
+    accentSoft: 'rgba(156,51,73,.17)', accentSoft2: 'rgba(156,51,73,.34)',
+    paper: '#ece3d4', paperTwo: '#ddd0b8', paperInk: '#1c1210', paperHair: 'rgba(28,18,16,.14)',
+  },
+  navy: {
+    accent: '#5b80b8', accentTwo: '#426194', accentDeep: '#2a3d5c',
+    accentSoft: 'rgba(91,128,184,.17)', accentSoft2: 'rgba(91,128,184,.34)',
+    paper: '#eceae2', paperTwo: '#dcd8cd', paperInk: '#11161f', paperHair: 'rgba(17,22,31,.14)',
+  },
+  camel: {
+    accent: '#c19a6b', accentTwo: '#a87f52', accentDeep: '#8a6740',
+    accentSoft: 'rgba(193,154,107,.18)', accentSoft2: 'rgba(193,154,107,.34)',
+    paper: '#f1e7d2', paperTwo: '#e4d4b0', paperInk: '#2a2015', paperHair: 'rgba(42,32,21,.14)',
+  },
+};
+let _currentTheme = 'huashu';
+
+function paintTheme(name) {
+  const t = THEMES[name] || THEMES.huashu;
+  const root = document.documentElement.style;
+  root.setProperty('--accent', t.accent);
+  root.setProperty('--accent-2', t.accentTwo);
+  root.setProperty('--accent-deep', t.accentDeep);
+  root.setProperty('--accent-soft', t.accentSoft);
+  root.setProperty('--accent-soft-2', t.accentSoft2);
+  root.setProperty('--paper', t.paper);
+  root.setProperty('--paper-2', t.paperTwo);
+  root.setProperty('--paper-ink', t.paperInk);
+  root.setProperty('--paper-hair', t.paperHair);
+  document.querySelectorAll('.theme-row').forEach(r => r.classList.toggle('active', r.dataset.theme === name));
+  _currentTheme = name;
+}
+
+function setTheme(name) {
+  if (!THEMES[name]) return;
+  paintTheme(name);
+  CFG.webui_theme = name;
+  writeConfig('webui_theme', name);
+  toast('Palette — ' + name.charAt(0).toUpperCase() + name.slice(1));
+}
+
+async function restoreTheme() {
+  const name = (CFG.webui_theme && THEMES[CFG.webui_theme]) ? CFG.webui_theme : 'huashu';
+  paintTheme(name);
+}
+
+/* ───────────────────────── font style picker ───────────────────────── */
+/* Cosmetic only, like personality level — persisted in localStorage, never
+   touches config.prop since service.sh has no concept of WebUI typography. */
+
+const FONT_STACKS = {
+  huashu:   "'Bricolage Grotesque','Avenir Next','Segoe UI',system-ui,sans-serif",
+  rajdhani: "'Rajdhani','Bricolage Grotesque',system-ui,sans-serif",
+  orbitron: "'Orbitron','Bricolage Grotesque',system-ui,sans-serif",
+  saira:    "'Saira Condensed','Bricolage Grotesque',system-ui,sans-serif",
+  bebas:    "'Bebas Neue','Bricolage Grotesque',system-ui,sans-serif",
+};
+const FONT_KEY = 'iob_font';
+
+function setFont(name) {
+  if (!FONT_STACKS[name]) return;
+  document.documentElement.style.setProperty('--display', FONT_STACKS[name]);
+  document.querySelectorAll('.font-row').forEach(r => r.classList.toggle('active', r.dataset.font === name));
+  try { localStorage.setItem(FONT_KEY, name); } catch (e) {}
+  toast('Font — ' + name.charAt(0).toUpperCase() + name.slice(1));
+}
+
+function restoreFont() {
+  let name = 'huashu';
+  try { name = localStorage.getItem(FONT_KEY) || 'huashu'; } catch (e) {}
+  if (!FONT_STACKS[name]) name = 'huashu';
+  document.documentElement.style.setProperty('--display', FONT_STACKS[name]);
+  document.querySelectorAll('.font-row').forEach(r => r.classList.toggle('active', r.dataset.font === name));
+}
+
+/* ───────────────────────── banner / avatar personalization ───────────────────────── */
+/* Uploaded images never leave the device — read client-side via FileReader,
+   re-encoded to a fixed-size JPEG on a canvas, and kept in localStorage.
+   api.sh has no upload endpoint and never needs one for this. */
+
+const CROP_DEFAULTS = { banner: 'default_banner.jpg', avatar: 'default_avatar.jpg' };
+const CROP_OUTPUT   = { banner: { w: 1280, h: 427 }, avatar: { w: 480, h: 480 } };
+const CROP_MAXMB    = { banner: 5, avatar: 3 };
+const IMG_KEY       = { banner: 'iob_banner_img', avatar: 'iob_avatar_img' };
+
+const cropState = {
+  kind: null, naturalW: 0, naturalH: 0, scale: 1, minScale: 1,
+  tx: 0, ty: 0, dragging: false, lastX: 0, lastY: 0, frameW: 0, frameH: 0,
+};
+
+function applyImageToUI(kind, src) {
+  const el = document.getElementById(kind === 'banner' ? 'banner-img' : 'avatar-img');
+  if (el) el.src = src;
+}
+
+function restorePersonalizedImages() {
+  try { const b = localStorage.getItem(IMG_KEY.banner); if (b) applyImageToUI('banner', b); } catch (e) {}
+  try { const a = localStorage.getItem(IMG_KEY.avatar); if (a) applyImageToUI('avatar', a); } catch (e) {}
+}
+
+function openCrop(kind) {
+  cropState.kind = kind;
+  document.getElementById('crop-title').textContent = kind === 'banner' ? 'Change Banner' : 'Change Profile Image';
+  document.getElementById('crop-size-limit').textContent = CROP_MAXMB[kind] + 'MB';
+  document.getElementById('crop-frame').className = 'crop-frame ' + kind;
+  document.getElementById('crop-empty-state').style.display = 'block';
+  document.getElementById('crop-zoom-wrap').style.display = 'none';
+  document.getElementById('crop-actions').style.display = 'none';
+  document.getElementById('crop-save-btn').disabled = true;
+  const img = document.getElementById('crop-img');
+  img.style.display = 'none';
+  img.removeAttribute('src');
+  cropState.naturalW = 0;
+  document.getElementById('crop-overlay').classList.add('show');
+}
+
+function closeCrop() {
+  document.getElementById('crop-overlay').classList.remove('show');
+  cropState.kind = null;
+}
+
+function onCropFileChosen(e) {
+  const file = e.target.files && e.target.files[0];
+  e.target.value = '';
+  if (!file || !cropState.kind) return;
+  const maxBytes = CROP_MAXMB[cropState.kind] * 1024 * 1024;
+  if (file.size > maxBytes) { toast('Image too large — max ' + CROP_MAXMB[cropState.kind] + 'MB'); return; }
+  if (!/^image\/(jpeg|png|webp)$/.test(file.type)) { toast('Use JPG, PNG or WEBP'); return; }
+  const reader = new FileReader();
+  reader.onload = (ev) => loadCropImage(ev.target.result);
+  reader.onerror = () => toast('Could not read that file');
+  reader.readAsDataURL(file);
+}
+
+function loadCropImage(dataUrl) {
+  const img = document.getElementById('crop-img');
+  img.onload = () => {
+    cropState.naturalW = img.naturalWidth;
+    cropState.naturalH = img.naturalHeight;
+    const rect = document.getElementById('crop-frame').getBoundingClientRect();
+    cropState.frameW = rect.width; cropState.frameH = rect.height;
+    cropState.minScale = Math.max(cropState.frameW / cropState.naturalW, cropState.frameH / cropState.naturalH);
+    cropState.scale = cropState.minScale;
+    cropState.tx = (cropState.frameW - cropState.naturalW * cropState.scale) / 2;
+    cropState.ty = (cropState.frameH - cropState.naturalH * cropState.scale) / 2;
+    applyCropTransform();
+    img.style.display = 'block';
+    document.getElementById('crop-empty-state').style.display = 'none';
+    document.getElementById('crop-zoom-wrap').style.display = 'flex';
+    document.getElementById('crop-actions').style.display = 'flex';
+    document.getElementById('crop-save-btn').disabled = false;
+    document.getElementById('crop-zoom').value = 100;
+  };
+  img.onerror = () => toast('Could not load that image');
+  img.src = dataUrl;
+}
+
+function applyCropTransform() {
+  document.getElementById('crop-img').style.transform =
+    'translate(' + cropState.tx + 'px,' + cropState.ty + 'px) scale(' + cropState.scale + ')';
+}
+
+function clampCropPosition() {
+  const w = cropState.naturalW * cropState.scale, h = cropState.naturalH * cropState.scale;
+  cropState.tx = Math.min(0, Math.max(cropState.frameW - w, cropState.tx));
+  cropState.ty = Math.min(0, Math.max(cropState.frameH - h, cropState.ty));
+}
+
+function onCropZoom(val) {
+  if (!cropState.naturalW) return;
+  const cx = cropState.frameW / 2, cy = cropState.frameH / 2;
+  const imgX = (cx - cropState.tx) / cropState.scale, imgY = (cy - cropState.ty) / cropState.scale;
+  cropState.scale = cropState.minScale * (val / 100);
+  cropState.tx = cx - imgX * cropState.scale;
+  cropState.ty = cy - imgY * cropState.scale;
+  clampCropPosition();
+  applyCropTransform();
+}
+
+function initCropDrag() {
+  const frame = document.getElementById('crop-frame');
+  frame.addEventListener('pointerdown', (e) => {
+    if (!cropState.naturalW) return;
+    cropState.dragging = true; cropState.lastX = e.clientX; cropState.lastY = e.clientY;
+    try { frame.setPointerCapture(e.pointerId); } catch (er) {}
+  });
+  frame.addEventListener('pointermove', (e) => {
+    if (!cropState.dragging) return;
+    cropState.tx += e.clientX - cropState.lastX;
+    cropState.ty += e.clientY - cropState.lastY;
+    cropState.lastX = e.clientX; cropState.lastY = e.clientY;
+    clampCropPosition();
+    applyCropTransform();
+  });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev =>
+    frame.addEventListener(ev, () => { cropState.dragging = false; }));
+}
+
+function saveCrop() {
+  if (!cropState.naturalW || !cropState.kind) return;
+  const out = CROP_OUTPUT[cropState.kind];
+  const canvas = document.createElement('canvas');
+  canvas.width = out.w; canvas.height = out.h;
+  const ctx = canvas.getContext('2d');
+  const s = out.w / cropState.frameW;
+  const img = document.getElementById('crop-img');
+  ctx.drawImage(img, cropState.tx * s, cropState.ty * s, cropState.naturalW * cropState.scale * s, cropState.naturalH * cropState.scale * s);
+  const quality = cropState.kind === 'banner' ? 0.85 : 0.88;
+  let dataUrl;
+  try { dataUrl = canvas.toDataURL('image/jpeg', quality); } catch (e) { toast('Could not process image'); return; }
+  try { localStorage.setItem(IMG_KEY[cropState.kind], dataUrl); }
+  catch (e) { toast('⚠ storage full — try a smaller image'); return; }
+  applyImageToUI(cropState.kind, dataUrl);
+  toast((cropState.kind === 'banner' ? 'Banner' : 'Profile image') + ' updated');
+  closeCrop();
+}
+
+function restoreCropDefault() {
+  if (!cropState.kind) return;
+  try { localStorage.removeItem(IMG_KEY[cropState.kind]); } catch (e) {}
+  applyImageToUI(cropState.kind, CROP_DEFAULTS[cropState.kind]);
+  toast((cropState.kind === 'banner' ? 'Banner' : 'Profile image') + ' reset to default');
+  closeCrop();
+}
+
+function resetPersonalization() {
+  confirmDialog('Restore Defaults', 'Reset banner, profile image, and font style back to the originals?', () => {
+    try {
+      localStorage.removeItem(IMG_KEY.banner);
+      localStorage.removeItem(IMG_KEY.avatar);
+      localStorage.removeItem(FONT_KEY);
+    } catch (e) {}
+    applyImageToUI('banner', CROP_DEFAULTS.banner);
+    applyImageToUI('avatar', CROP_DEFAULTS.avatar);
+    restoreFont();
+    toast('Restored to defaults');
+  });
+}
+
+async function restoreGlass() {
+  const r = await apiCall('get_glass');
+  const raw = (r && r.output) || 'alpha=96\nblur=20\nborder=8';
+  const kv = {};
+  raw.split(/[|\n]/).forEach(l => { const i = l.indexOf('='); if (i > 0) kv[l.slice(0, i).trim()] = l.slice(i + 1).trim(); });
+  const a = +kv.alpha || 96, b = +kv.blur || 20, o = +kv.border || 8;
+  document.getElementById('sl-glass-alpha').value = a;
+  document.getElementById('sl-glass-blur').value = b;
+  document.getElementById('sl-glass-border').value = o;
+  document.getElementById('glass-alpha-val').textContent = a + '%';
+  document.getElementById('glass-blur-val').textContent = b + 'px';
+  document.getElementById('glass-border-val').textContent = o + '%';
+  _applyGlass(a, b, o);
+}
+
+/* ───────────────────────── Makima personality ───────────────────────── */
+
+let _personality = (() => { try { return parseInt(localStorage.getItem('iob_personality') || '60'); } catch (e) { return 60; } })();
+
+function setPersonalityLevel(v) {
+  v = parseInt(v);
+  _personality = v;
+  try { localStorage.setItem('iob_personality', v); } catch (e) {}
+  const lbl = document.getElementById('personality-lbl');
+  lbl.textContent = v < 33 ? 'Professional' : v < 67 ? 'Balanced' : 'Flirty';
+  renderMakimaMsg();
+}
+
+function renderMakimaMsg() {
+  const el = document.getElementById('makima-msg');
+  if (!el) return;
+  const tone = _personality < 33 ? 'pro' : _personality < 67 ? 'mid' : 'flirty';
+  const stLower = (S.status || '').trim().toLowerCase();
+  const charging = stLower === 'charging' || stLower === 'full';
+  let msg;
+  if (S.temp >= 42) {
+    msg = { pro: 'Battery temperature is ' + S.temp.toFixed(1) + '°C — above the safe charge threshold. Consider Emergency Cool Down.',
+            mid: S.temp.toFixed(1) + '°C is getting warm. I would ease off intensive tasks for a bit.',
+            flirty: 'Mm, ' + S.temp.toFixed(1) + '°C... you are running hot, darling. Let me cool you down. 🔥' }[tone];
+  } else if (S.level <= (CFG.low_threshold || 20) && !charging) {
+    msg = { pro: 'Battery at ' + S.level + '% — below the configured low-power threshold.',
+            mid: S.level + '% left. Might want to plug in soon.',
+            flirty: 'Only ' + S.level + '% left, and you are still here with me? Go charge, I will wait.' }[tone];
+  } else if (charging) {
+    msg = { pro: 'Charging — ' + S.level + '%, ' + S.current + ' mA draw, profile ' + S.profile + '.',
+            mid: 'Charging up nicely, ' + S.level + '% now.',
+            flirty: 'Filling you back up to full, ' + S.level + '% already. Patience.' }[tone];
+  } else if (S.profile === 'gaming') {
+    msg = { pro: 'Gaming profile active — touch latency and FPS scaling engaged.',
+            mid: 'Gaming mode is on, enjoy the extra frames.',
+            flirty: 'Gaming mode, hm? Show me what you have got.' }[tone];
+  } else {
+    msg = { pro: S.level + '% · ' + S.temp.toFixed(1) + '°C · profile ' + S.profile + '. All systems nominal.',
+            mid: 'Everything looks calm — ' + S.level + '%, ' + S.temp.toFixed(1) + '°C.',
+            flirty: 'Just watching over you quietly. ' + S.level + '% and feeling fine.' }[tone];
+  }
+  el.textContent = msg;
+}
+
+/* ───────────────────────── status polling / render ───────────────────────── */
+
+function updateRootStatus() {
+  const dot = document.getElementById('root-dot'), txt = document.getElementById('root-status-text');
+  if (IS_KSU) { dot.className = 'root-dot on'; txt.textContent = 'KernelSU — checking…'; }
+  else { dot.className = 'root-dot'; txt.textContent = 'Checking…'; }
+}
+
+/* battery_info.prop is a plain static file written every cycle by service.sh —
+   fetchable the same way in both KSU WebView and Magisk httpd (it's just a
+   static asset in webroot, not a CGI action). Carries device/kernel/chipset/
+   root manager — none of which api.sh's JSON actions expose. */
+async function fetchInfoProp() {
+  try {
+    const ctrl = new AbortController(); const tid = setTimeout(() => ctrl.abort(), 4000);
+    const r = await fetch('/battery_info.prop?t=' + Date.now(), { cache: 'no-store', signal: ctrl.signal });
+    clearTimeout(tid);
+    if (!r.ok) return null;
+    const txt = await r.text();
+    const kv = {};
+    txt.split(/\r?\n/).forEach(line => { const i = line.indexOf('='); if (i > 0) kv[line.slice(0, i).trim()] = line.slice(i + 1).trim(); });
+    return kv;
+  } catch (e) { return null; }
+}
+
+function applyInfoProp(kv) {
+  if (!kv) return;
+  const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.textContent = val; };
+  if (kv.device && kv.device !== 'unknown') set('hero-device', kv.device);
+  if (kv.android && kv.android !== 'unknown') set('hero-android', kv.android);
+  if (kv.chipset) set('hero-chipset', kv.chipset);
+  if (kv.kernel && kv.kernel !== 'unknown') set('hero-kernel', 'Kernel ' + kv.kernel);
+  if (kv.root_mgr) {
+    const dot = document.getElementById('root-dot'), txt = document.getElementById('root-status-text');
+    const active = kv.root_mgr !== 'Unknown';
+    dot.className = 'root-dot ' + (active ? 'on' : 'off');
+    txt.textContent = active ? (kv.root_mgr + ' — active') : 'not detected';
+  }
+}
+
+function updateClock() {
+  const d = new Date();
+  document.getElementById('clock').textContent = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+}
+
+function pct(v, max) { return Math.max(0, Math.min(100, (v / max) * 100)); }
+
+function renderStatus() {
+  document.getElementById('status-bat').textContent = S.level + '%';
+  document.getElementById('bat-stat-val').textContent = S.level + '%';
+  const healthEl = document.getElementById('bat-health-short');
+  healthEl.textContent = 'Health ' + S.battHealth + '%';
+  healthEl.style.color = S.battHealthWarn === 'severe' ? 'var(--red)' : S.battHealthWarn === 'warn' ? 'var(--amber)' : 'var(--green)';
+
+  document.getElementById('cpu-val').textContent = S.cpu + '%';
+  document.getElementById('cpu-bar').style.width = pct(S.cpu, 100) + '%';
+  document.getElementById('temp-val').textContent = S.temp.toFixed(1) + '°C';
+  const tBar = document.getElementById('temp-bar');
+  tBar.style.width = pct(S.temp, 50) + '%';
+  tBar.className = 'bar-fill' + (S.temp >= 42 ? ' red' : S.temp >= 38 ? ' amber' : '');
+  document.getElementById('volt-val').textContent = S.voltage + ' mV';
+  document.getElementById('volt-bar').style.width = pct(S.voltage, 5000) + '%';
+
+  const pcpu = document.getElementById('p-cpu-val'); if (pcpu) pcpu.textContent = S.cpu + '%';
+  const pcpub = document.getElementById('p-cpu-bar'); if (pcpub) pcpub.style.width = pct(S.cpu, 100) + '%';
+  const ptemp = document.getElementById('p-temp-val'); if (ptemp) ptemp.textContent = S.temp.toFixed(1) + '°C';
+  const ptempb = document.getElementById('p-temp-bar'); if (ptempb) ptempb.style.width = pct(S.temp, 50) + '%';
+  const pctemp = document.getElementById('p-cputemp-val'); if (pctemp) pctemp.textContent = S.cpuTemp.toFixed(1) + '°C';
+  const pctempb = document.getElementById('p-cputemp-bar'); if (pctempb) pctempb.style.width = pct(S.cpuTemp, 70) + '%';
+  const pvolt = document.getElementById('p-volt-val'); if (pvolt) pvolt.textContent = S.voltage + ' mV';
+  const pvoltb = document.getElementById('p-volt-bar'); if (pvoltb) pvoltb.style.width = pct(S.voltage, 5000) + '%';
+  const pcur = document.getElementById('p-cur-val'); if (pcur) pcur.textContent = S.current + ' mA';
+  const pcurb = document.getElementById('p-cur-bar'); if (pcurb) pcurb.style.width = pct(S.current, 3000) + '%';
+  const phealth = document.getElementById('p-health-pct'); if (phealth) phealth.textContent = S.battHealth + '%';
+  const phstatus = document.getElementById('p-health-status'); if (phstatus) phstatus.textContent = S.battHealthWarn === 'ok' ? 'Good' : S.battHealthWarn === 'warn' ? 'Degraded' : 'Replace soon';
+  const pfull = document.getElementById('p-charge-full'); if (pfull) pfull.textContent = (S.chargeFull || '—') + ' mAh';
+
+  if (!profileLocked()) setActiveProfile(S.profile);
+  renderMakimaMsg();
+}
+
+let _profileLockUntil = 0;
+function lockProfile(ms) { _profileLockUntil = Date.now() + (ms || 20000); }
+function profileLocked() { return Date.now() < _profileLockUntil; }
+
+async function refreshStatus() {
+  const st = await getStatus();
+  if (!st) return;
+  Object.assign(S, st);
+  renderStatus();
+}
+
+/* ───────────────────────── boot ───────────────────────── */
+
+async function boot() {
+  updateRootStatus();
+  updateClock();
+  setInterval(updateClock, 15000);
+
+  restoreFont();
+  restorePersonalizedImages();
+  initCropDrag();
+
+  await loadConfig();
+  applyConfigToUI();
+  restoreTheme();
+  addFeatLog('config loaded — profile: ' + (CFG.profile || 'balanced'));
+  await restoreGlass();
+  await refreshStatus();
+  loadCompat();
+  applyInfoProp(await fetchInfoProp());
+
+  setInterval(refreshStatus, 5000);
+  setInterval(loadCompat, 60000);
+  setInterval(async () => applyInfoProp(await fetchInfoProp()), 45000);
+}
+
+document.addEventListener('DOMContentLoaded', boot);
+
+</script>
+</body>
+</html>
