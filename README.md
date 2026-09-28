@@ -27,6 +27,7 @@ If you use or modify this project, please keep the original credits and mention 
 
 Since this project is open source, please respect the original developer and the work behind the project.
 
-## Preview Check Releases!
+## Preview 
 
+**[Full Live Demo](https://kerviii.github.io/IoBattery-Huashu-Web/)**
 Thanks for using it (⁠￣⁠ヘ⁠￣⁠;⁠)
